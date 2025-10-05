@@ -603,7 +603,19 @@ Tests full Create, Read, Update, Delete lifecycle.
   "attendancePercentage": 90,
   "assignmentScore": 85
 }
-```
+
+
+```<img width="488" height="590" alt="Screenshot 2025-10-05 at 5 16 04 PM" src="https://github.com/user-attachments/assets/62e7bda6-ba1b-44a2-8a94-8933ed69c5a7" />
+
+<img width="531" height="596" alt="Screenshot 2025-10-05 at 5 16 19 PM" src="https://github.com/user-attachments/assets/4ba88c95-02ae-47a4-a544-c6a68d2051b2" />
+<img width="498" height="594" alt="Screenshot 2025-10-05 at 5 17 11 PM" src="https://github.com/user-attachments/assets/6e0157de-1842-4f22-85b1-01e9ce1bd339" />
+
+<img width="456" height="599" alt="Screenshot 2025-10-05 at 5 17 23 PM" src="https://github.com/user-attachments/assets/dea21923-d7c2-4a38-bbe7-c36ad7344a47" />
+
+
+Where second responses User is already existed in database, Which results in error of UNique constraints.
+In 4th Image, it shows invalid access without token or temperated tokens. 
+
 
 **Create Response:**
 
@@ -623,7 +635,17 @@ Tests full Create, Read, Update, Delete lifecycle.
     "updated_at": "2025-10-05T16:00:00.000Z"
   }
 }
+
+
+<img width="792" height="602" alt="Screenshot 2025-10-05 at 5 17 58 PM" src="https://github.com/user-attachments/assets/34a894a5-f1e4-4d39-b4f6-637e6bbb70ae" />
+
+<img width="787" height="601" alt="Screenshot 2025-10-05 at 5 18 14 PM" src="https://github.com/user-attachments/assets/6b6683ab-fa14-40df-9baa-2efe2f0a913f" />
+
 ```
+
+<img width="783" height="599" alt="Screenshot 2025-10-05 at 5 24 13 PM" src="https://github.com/user-attachments/assets/19436ff4-7d01-4d39-97b4-3762a7270d16" />
+
+
 
 **Update Request (partial):**
 
@@ -633,6 +655,17 @@ Tests full Create, Read, Update, Delete lifecycle.
   "status": "graduated"
 }
 ```
+
+<img width="789" height="603" alt="Screenshot 2025-10-05 at 5 25 14 PM" src="https://github.com/user-attachments/assets/607805d8-ed9a-4f71-8b88-ed1b2b128371" />
+
+<img width="854" height="597" alt="Screenshot 2025-10-05 at 5 25 26 PM" src="https://github.com/user-attachments/assets/164855c8-f56d-40ae-b191-5c1f4fd428cd" />
+
+<img width="836" height="597" alt="Screenshot 2025-10-05 at 5 25 42 PM" src="https://github.com/user-attachments/assets/c093c89a-f97f-4f47-a655-7dd6cfd5b1a6" />
+
+<img width="807" height="602" alt="Screenshot 2025-10-05 at 5 25 49 PM" src="https://github.com/user-attachments/assets/260080d9-fcc0-4dc1-a598-68071c09f667" />
+
+<img width="803" height="609" alt="Screenshot 2025-10-05 at 5 26 01 PM" src="https://github.com/user-attachments/assets/df77987b-846d-4847-87c5-98125df5372a" />
+
 
 **Update Response:**
 
