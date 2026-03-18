@@ -14,10 +14,18 @@ interface Student {
   grade_point_average?: number;
 }
 
+interface StudentFormData {
+  name: string;
+  status: string;
+  isScholarship: boolean;
+  attendancePercentage: number;
+  assignmentScore: number;
+}
+
 interface StudentModalProps {
   student?: Student;
   onClose: () => void;
-  onSave: (student: any) => Promise<void>;
+  onSave: (student: StudentFormData) => Promise<void>;
 }
 
 export default function StudentModal({ student, onClose, onSave }: StudentModalProps) {

@@ -254,7 +254,7 @@ describe('OddsUp NBA — StudentModal Suite', () => {
   it('renders "Edit Student" title when an existing student is provided', () => {
     render(
       <StudentModal
-        student={NBA_ROSTER[0] as any}
+        student={NBA_ROSTER[0]}
         onClose={mockOnClose}
         onSave={mockOnSave}
       />,
@@ -265,7 +265,7 @@ describe('OddsUp NBA — StudentModal Suite', () => {
   it('pre-populates the name field when editing', () => {
     render(
       <StudentModal
-        student={NBA_ROSTER[0] as any}
+        student={NBA_ROSTER[0]}
         onClose={mockOnClose}
         onSave={mockOnSave}
       />,

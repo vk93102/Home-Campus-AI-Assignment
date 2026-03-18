@@ -13,6 +13,14 @@ interface Student {
   grade_point_average?: number;
 }
 
+interface StudentFormData {
+  name: string;
+  status: string;
+  isScholarship: boolean;
+  attendancePercentage: number;
+  assignmentScore: number;
+}
+
 interface DashboardProps {
   onLogout: () => void;
 }
@@ -60,27 +68,19 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     fetchStudents();
   }, [page, statusFilter, search]);
 
-  const handleAddStudent = async (studentData: any) => {
-    try {
-      await api.students.create(studentData);
-      setShowModal(false);
-      setPage(1);
-      await fetchStudents();
-    } catch (err) {
-      throw err;
-    }
+  const handleAddStudent = async (studentData: StudentFormData) => {
+    await api.students.create(studentData);
+    setShowModal(false);
+    setPage(1);
+    await fetchStudents();
   };
 
-  const handleUpdateStudent = async (studentData: any) => {
+  const handleUpdateStudent = async (studentData: StudentFormData) => {
     if (editingStudent) {
-      try {
-        await api.students.update(editingStudent.id, studentData);
-        setShowModal(false);
-        setEditingStudent(undefined);
-        await fetchStudents();
-      } catch (err) {
-        throw err;
-      }
+      await api.students.update(editingStudent.id, studentData);
+      setShowModal(false);
+      setEditingStudent(undefined);
+      await fetchStudents();
     }
   };
 
