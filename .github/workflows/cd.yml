@@ -1,0 +1,151 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CD Pipeline — Continuous Deployment
+# Triggered when the CI workflow completes successfully on the main branch
+#
+# Deployment targets
+#  • staging   – auto-deploy on every successful CI run on main
+#  • production – manual approval gate required (environment protection rules)
+#
+# Secrets required (set in GitHub → Settings → Secrets and variables → Actions)
+#   DEPLOY_SSH_KEY         – private SSH key for the deploy server
+#   STAGING_HOST           – e.g. staging.oddsup.io
+#   PRODUCTION_HOST        – e.g. app.oddsup.io
+#   DEPLOY_USER            – SSH user on the remote host
+#   SLACK_WEBHOOK_URL      – (optional) Slack notifications
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: CD — OddsUp.io Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI — OddsUp.io Campus Portal"]
+    types: [completed]
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ── Guard: only proceed when CI passed ─────────────────────────────────────
+  check-ci:
+    name: ✅ Verify CI passed
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: CI passed — continuing to deploy
+        run: echo "CI succeeded. Proceeding with deployment."
+
+  # ── Staging deployment ──────────────────────────────────────────────────────
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: check-ci
+    environment:
+      name: staging
+      url: https://staging.oddsup.io
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull latest Docker image
+        run: |
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Deploy to staging via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            # Pull newest image
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+            # Gracefully restart the container
+            docker stop ai_campus_portal_staging || true
+            docker rm ai_campus_portal_staging   || true
+
+            docker run -d \
+              --name ai_campus_portal_staging \
+              --restart unless-stopped \
+              -p 80:80 \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+            # Verify the service is healthy
+            sleep 5
+            curl --fail http://localhost/health || exit 1
+
+      - name: Notify Slack — Staging deployed
+        if: ${{ success() && secrets.SLACK_WEBHOOK_URL != '' }}
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: "✅ *Staging* deployment succeeded for `${{ github.sha }}`"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # ── Production deployment (manual approval required) ───────────────────────
+  deploy-production:
+    name: 🏆 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    environment:
+      name: production          # configure required reviewers in GitHub settings
+      url: https://app.oddsup.io
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to production via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+            docker stop ai_campus_portal || true
+            docker rm ai_campus_portal   || true
+
+            docker run -d \
+              --name ai_campus_portal \
+              --restart unless-stopped \
+              -p 80:80 \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+            sleep 5
+            curl --fail http://localhost/health || exit 1
+
+      - name: Notify Slack — Production deployed
+        if: ${{ success() && secrets.SLACK_WEBHOOK_URL != '' }}
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: "🚀 *Production* deployment succeeded — SHA `${{ github.sha }}`"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify Slack — Production deployment failed
+        if: ${{ failure() }}
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: "❌ *Production* deployment FAILED — SHA `${{ github.sha }}`"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

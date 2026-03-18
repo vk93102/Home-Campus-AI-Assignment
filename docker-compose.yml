@@ -1,0 +1,49 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml
+# Local development + production preview for AI Campus Portal
+# ─────────────────────────────────────────────────────────────────────────────
+
+version: "3.9"
+
+services:
+  # ── Production build (nginx-served) ─────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: ai-campus-portal:latest
+    container_name: ai_campus_portal
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "com.oddsup.service=ai-campus-portal"
+      - "com.oddsup.env=production"
+
+  # ── Development server (hot-reload via Vite) ─────────────────────────────
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: deps          # reuse the deps layer — don't build nginx
+    image: ai-campus-portal:dev
+    container_name: ai_campus_portal_dev
+    command: npm run dev -- --host 0.0.0.0 --port 8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - /app/node_modules    # preserve container node_modules
+    environment:
+      - NODE_ENV=development
+    profiles:
+      - dev                  # only started with: docker compose --profile dev up
