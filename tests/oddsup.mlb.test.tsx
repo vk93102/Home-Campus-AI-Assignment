@@ -137,9 +137,6 @@ describe('OddsUp MLB — Loader Component Suite', () => {
   });
 });
 
-// ══════════════════════════════════════════════════════════════════════════════
-// 3rd Inning — NotFound Page Suite
-// ══════════════════════════════════════════════════════════════════════════════
 describe('OddsUp MLB — NotFound Page Suite', () => {
   let consoleSpy: ReturnType<typeof vi.spyOn>;
 
