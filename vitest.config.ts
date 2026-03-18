@@ -24,6 +24,10 @@ export default defineConfig({
         'src/main.tsx',
         'src/vite-env.d.ts',
         'src/components/ui/**',
+        // shadcn/ui generated hooks — not business logic
+        'src/hooks/**',
+        // pure provider/router wiring — no testable branches
+        'src/App.tsx',
       ],
       thresholds: {
         lines: 70,

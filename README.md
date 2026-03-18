@@ -1,3127 +1,1042 @@
-# 🏗️ Architecture & Design Decisions
+# ⚛️ Statyx Frontend — Referral Network Analytics Dashboard
 
-Comprehensive documentation of architectural choices, OOP principles, design patterns, and technical reasoning.
+> **A production-grade React 18 + TypeScript single-page application** delivering an interactive referral network intelligence dashboard with graph-theoretic visualisations, sports props analytics, multi-provider OAuth authentication, spring-physics animation orchestration, and a composable Recharts data visualisation layer — built for the Mercor Challenge and deployed live at [statyx.io](https://statyx.io).
 
-## Table of Contents
-
-1. [Architecture Overview](#architecture-overview)
-2. [Technology Stack Reasoning](#technology-stack-reasoning)
-3. [OOP Principles Implementation](#oop-principles-implementation)
-4. [Design Patterns](#design-patterns)
-5. [Backend Architecture](#backend-architecture)
-6. [Frontend Architecture](#frontend-architecture)
-7. [Security Architecture](#security-architecture)
-8. [Performance Optimizations](#performance-optimizations)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://typescriptlang.org)
+[![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
+[![JavaScript](https://img.shields.io/badge/JavaScript-98.8%25-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](#)
+[![Tailwind](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
+[![Framer Motion](https://img.shields.io/badge/Framer_Motion-latest-FF0050?style=flat-square)](https://www.framer.com/motion/)
+[![Recharts](https://img.shields.io/badge/Recharts-2.x-22b5bf?style=flat-square)](https://recharts.org)
+[![ESLint](https://img.shields.io/badge/ESLint-strict-4B32C3?style=flat-square&logo=eslint&logoColor=white)](https://eslint.org)
 
 ---
 
-## Architecture Overview
+## 🔗 Quick Links
 
-### High-Level Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         CLIENT LAYER                         │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  React Frontend (TypeScript)                          │  │
-│  │  - Components (UI)                                    │  │
-│  │  - State Management (useState, useEffect)            │  │
-│  │  - API Client (Axios)                                │  │
-│  │  - Routing (React Router)                            │  │
-│  └───────────────────────────────────────────────────────┘  │
-└──────────────────────┬──────────────────────────────────────┘
-                       │ HTTPS/JSON
-                       │ JWT Token in Header
-┌──────────────────────▼──────────────────────────────────────┐
-│                      API GATEWAY LAYER                       │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  Express.js Server                                    │  │
-│  │  - CORS Middleware                                    │  │
-│  │  - JWT Authentication Middleware                      │  │
-│  │  - Request Validation Middleware                      │  │
-│  │  - Error Handling Middleware                          │  │
-│  └───────────────────────────────────────────────────────┘  │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────────────┐
-│                    BUSINESS LOGIC LAYER                      │
-│  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐        │
-│  │ Controllers │  │  Services   │  │  Validators  │        │
-│  │ (Routes)    │──│  (Logic)    │──│  (Rules)     │        │
-│  └─────────────┘  └─────────────┘  └──────────────┘        │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────────────┐
-│                       DATA ACCESS LAYER                      │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  Models (ORM-like)                                    │  │
-│  │  - Student Model                                      │  │
-│  │  - User Model                                         │  │
-│  │  - Database Helper (SQLite wrapper)                  │  │
-│  └───────────────────────────────────────────────────────┘  │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────────────┐
-│                      PERSISTENCE LAYER                       │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  SQLite Database (data.sqlite)                        │  │
-│  │  - users table                                        │  │
-│  │  - students table                                     │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Architecture Style
-
-**Chosen:** **Layered (N-Tier) Architecture** with **RESTful API** design
-
-**Reasons:**
-
-1. **Separation of Concerns:** Each layer has a specific responsibility
-2. **Testability:** Layers can be tested independently
-3. **Maintainability:** Changes in one layer don't affect others
-4. **Scalability:** Layers can be scaled independently
-5. **Industry Standard:** Well-understood pattern with extensive documentation
-
-**Benefits:**
-
-- ✅ Clear boundaries between presentation, business logic, and data
-- ✅ Easy to add new features without breaking existing code
-- ✅ Supports multiple clients (web, mobile) using the same API
-- ✅ Enables parallel development (frontend/backend teams)
+| Resource | URL |
+|---|---|
+| 🌐 Live Platform | [statyx.io](https://statyx.io) |
+| 🎬 Live Demo Video | [Watch on Google Drive](https://drive.google.com/file/d/1MM9s7fH6XkBgMpIbQMhxkwRXxrmdAb6m/view?usp=sharing) |
+| 🐍 Backend Repo | [github.com/vk93102/statyx-Backend](https://github.com/vk93102/statyx-Backend) |
+| ⚛️ Frontend Repo | [github.com/vk93102/statyx-frontend](https://github.com/vk93102/statyx-frontend) |
 
 ---
 
-## Technology Stack Reasoning
+## 📋 Table of Contents
 
-### Backend: Express.js + SQLite
-
-#### Why Express.js?
-
-| Factor          | Reason                                                   |
-| --------------- | -------------------------------------------------------- |
-| **Maturity**    | Battle-tested framework with 10+ years of production use |
-| **Ecosystem**   | Massive npm ecosystem (400,000+ packages)                |
-| **Performance** | Non-blocking I/O, handles 10,000+ req/sec easily         |
-| **Simplicity**  | Minimal boilerplate, quick to set up                     |
-| **Flexibility** | No opinionated structure, choose your own patterns       |
-| **Community**   | Large community, extensive documentation                 |
-
-**Alternatives Considered:**
-
-- **Django (Python):** Rejected due to heavier runtime, slower for small projects
-- **Spring Boot (Java):** Rejected due to verbose syntax, longer dev time
-- **FastAPI (Python):** Rejected due to less mature ecosystem
-- **NestJS (Node):** Rejected due to complexity overkill for this project size
-
-#### Why SQLite?
-
-| Factor                 | Reason                                           |
-| ---------------------- | ------------------------------------------------ |
-| **Zero Configuration** | No separate database server needed               |
-| **Portability**        | Single file database, easy to backup/move        |
-| **Performance**        | Faster than client-server DBs for < 100K records |
-| **Reliability**        | ACID compliant, used in billions of devices      |
-| **Development Speed**  | No network latency, instant queries              |
-
-**Production Readiness:**
-
-- ✅ Handles 100,000+ queries/sec
-- ✅ Supports up to 281 TB database size
-- ✅ Used by Apple, Google, Microsoft in production
-- ⚠️ **Limitation:** Single-writer (fine for < 100 concurrent writes/sec)
-
-**When to Migrate to PostgreSQL:**
-
-- User base > 10,000 concurrent users
-- Multiple app servers (horizontal scaling)
-- Need for advanced features (full-text search, JSON queries)
-
-### Frontend: React + Vite + TypeScript
-
-#### Why React?
-
-| Factor                    | Reason                                                |
-| ------------------------- | ----------------------------------------------------- |
-| **Component Reusability** | Build once, use everywhere                            |
-| **Virtual DOM**           | Efficient updates, smooth UI                          |
-| **Ecosystem**             | Largest library ecosystem (shadcn/ui, Recharts, etc.) |
-| **Developer Experience**  | Fast refresh, great dev tools                         |
-| **Hiring Pool**           | Largest pool of frontend developers                   |
-
-**Alternatives Considered:**
-
-- **Vue.js:** Rejected due to smaller ecosystem
-- **Angular:** Rejected due to steep learning curve, verbosity
-- **Svelte:** Rejected due to smaller community, fewer libraries
-
-#### Why Vite?
-
-| Factor         | Reason                                              |
-| -------------- | --------------------------------------------------- |
-| **Speed**      | 10-100x faster than Webpack (cold start < 1 second) |
-| **Modern**     | Native ESM, no bundling in dev                      |
-| **HMR**        | Instant hot module replacement                      |
-| **Build Size** | Optimized production builds (Rollup-based)          |
-
-**vs Webpack:**
-
-- Development server startup: **0.8s (Vite)** vs **15s (Webpack)**
-- Hot reload: **< 50ms (Vite)** vs **500ms+ (Webpack)**
-
-#### Why TypeScript?
-
-| Factor              | Benefit                                   |
-| ------------------- | ----------------------------------------- |
-| **Type Safety**     | Catch errors at compile time, not runtime |
-| **IntelliSense**    | Auto-complete, refactoring support        |
-| **Documentation**   | Types serve as inline documentation       |
-| **Maintainability** | Easier to refactor large codebases        |
-
-**Developer Productivity:**
-
-- 15% fewer bugs in production (Microsoft study)
-- 20% faster development with large teams
-- Better IDE support (VS Code, WebStorm)
+- [Demo Walkthrough](#-demo-walkthrough)
+- [Project Overview](#-project-overview)
+- [Frontend Architecture](#️-frontend-architecture)
+- [Component Hierarchy](#-component-hierarchy)
+- [Tech Stack Deep Dive](#-tech-stack-deep-dive)
+- [State Management Architecture](#-state-management-architecture)
+- [Graph Algorithm Engine](#-graph-algorithm-engine)
+- [Data Visualisation Layer](#-data-visualisation-layer)
+- [Animation System](#-animation-system)
+- [Authentication Flow (Frontend)](#-authentication-flow-frontend)
+- [Backend Integration](#-backend-integration)
+- [Performance Architecture](#-performance-architecture)
+- [Directory Structure](#-directory-structure)
+- [Design System](#-design-system)
+- [Build Pipeline](#️-build-pipeline)
+- [Local Setup](#-local-setup)
+- [Environment Variables](#-environment-variables)
 
 ---
 
-## OOP Principles Implementation
+## 🎬 Demo Walkthrough
 
-### 1. Encapsulation
+> 📺 **[Watch the full live demo on Google Drive](https://drive.google.com/file/d/1MM9s7fH6XkBgMpIbQMhxkwRXxrmdAb6m/view?usp=sharing)**
 
-**Definition:** Bundling data and methods that operate on data within a single unit (class), hiding internal state.
-
-#### Backend Example: Student Model
-
-```javascript
-// filepath: backend/src/models/Student.js
-class Student {
-  constructor(data) {
-    // Private-like properties (convention: prefix with _)
-    this._id = data.id;
-    this._name = data.name;
-    this._status = data.status;
-    this._attendancePercentage = data.attendancePercentage;
-    this._assignmentScore = data.assignmentScore;
-
-    // Encapsulated: GPA is calculated, not stored
-    this._gpa = this.calculateGPA();
-  }
-
-  // Public getter methods (read-only access)
-  get id() {
-    return this._id;
-  }
-  get name() {
-    return this._name;
-  }
-  get gpa() {
-    return this._gpa;
-  }
-
-  // Private method (encapsulated business logic)
-  calculateGPA() {
-    return (
-      (this._attendancePercentage * 0.4 + this._assignmentScore * 0.6) / 10
-    );
-  }
-
-  // Public method with validation
-  updateScores(attendance, assignment) {
-    if (attendance < 0 || attendance > 100) {
-      throw new Error("Attendance must be 0-100");
-    }
-    if (assignment < 0 || assignment > 100) {
-      throw new Error("Assignment score must be 0-100");
-    }
-    this._attendancePercentage = attendance;
-    this._assignmentScore = assignment;
-    this._gpa = this.calculateGPA(); // Recalculate GPA
-  }
-
-  // Convert to database format (hides internal representation)
-  toDbObject() {
-    return {
-      id: this._id,
-      name: this._name,
-      status: this._status,
-      attendance_percentage: this._attendancePercentage,
-      assignment_score: this._assignmentScore,
-      grade_point_average: this._gpa,
-    };
-  }
-}
-
-module.exports = Student;
-```
-
-**Benefits:**
-
-- ✅ GPA calculation logic hidden from external code
-- ✅ Validation enforced in one place
-- ✅ Internal data format (camelCase) vs DB format (snake_case) abstracted
-- ✅ Changes to GPA formula only require updating one method
-
-#### Frontend Example: API Client
-
-```typescript
-// filepath: frontend/src/utils/api.ts
-class ApiClient {
-  private baseURL: string;
-  private axiosInstance: AxiosInstance;
-
-  constructor(baseURL: string) {
-    this.baseURL = baseURL;
-    this.axiosInstance = axios.create({ baseURL });
-
-    // Encapsulated: auto-attach token to requests
-    this.axiosInstance.interceptors.request.use((config) => {
-      const token = this.getToken();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    });
-  }
-
-  // Private helper (hidden from external code)
-  private getToken(): string | null {
-    return localStorage.getItem("auth_token");
-  }
-
-  // Public interface (abstracts HTTP details)
-  async getStudents(params?: StudentQueryParams): Promise<Student[]> {
-    const response = await this.axiosInstance.get("/students", { params });
-    return response.data.data;
-  }
-
-  async createStudent(data: CreateStudentDTO): Promise<Student> {
-    const response = await this.axiosInstance.post("/students", data);
-    return response.data.data;
-  }
-}
-
-export const apiClient = new ApiClient(import.meta.env.VITE_API_BASE_URL);
-```
-
-**Benefits:**
-
-- ✅ Token management hidden from components
-- ✅ HTTP implementation details abstracted
-- ✅ Easy to switch from axios to fetch without changing components
+The demo covers the complete end-to-end user journey across both the frontend SPA and its integration with the Django REST backend. Here is a detailed breakdown of what is demonstrated:
 
 ---
 
-### 2. Abstraction
+### 🔐 Part 1 — Authentication & Onboarding
 
-**Definition:** Hiding complex implementation details, exposing only essential features.
+**What you see:**
+The application opens to a polished sign-in/sign-up surface with three distinct authentication pathways rendered with Framer Motion entrance animations and staggered micro-interaction reveals.
 
-#### Backend Example: Database Service
+**Technical detail:**
+- **Google OAuth 2.0 flow** — Frontend triggers Google Sign-In popup, receives ID token (JWT), POSTs to `POST /api/auth/google/` on the Django backend. Backend verifies the JWT signature against Google's JWKS endpoint, extracts the `sub` claim as stable identity, upserts the user record in PostgreSQL, and returns a Django session cookie (`HttpOnly; Secure; SameSite=Lax`).
+- **LinkedIn OAuth 2.0 PKCE flow** — Frontend redirects to LinkedIn authorization endpoint with `scope=openid profile email`. LinkedIn issues an auth code, the callback page exchanges it with the Django backend via `POST /api/auth/linkedin/`, which fetches the user's professional profile from LinkedIn `/v2/me` and upserts on `linkedin_id`.
+- **Twilio SMS OTP flow** — User enters phone number, triggering `POST /api/auth/send-otp/` which dispatches an SMS via the Twilio Verify API (`twilio.verify.v2.services.verifications.create()`). User enters the 6-digit code, `POST /api/auth/verify-otp/` calls `verification_checks.create()` — on `status == "approved"`, a Django session is established.
 
-```javascript
-// filepath: backend/src/services/StudentService.js
-class StudentService {
-  constructor(db) {
-    this.db = db; // Database abstraction
-  }
-
-  // Abstract interface: user doesn't know about SQL
-  async findAll(userId, filters = {}) {
-    // Complex SQL query abstracted away
-    const { status, page = 1, limit = 10, search } = filters;
-    let query = "SELECT * FROM students WHERE user_id = ?";
-    const params = [userId];
-
-    if (status) {
-      query += " AND status = ?";
-      params.push(status);
-    }
-
-    if (search) {
-      query += " AND (name LIKE ? OR email LIKE ?)";
-      params.push(`%${search}%`, `%${search}%`);
-    }
-
-    query += " LIMIT ? OFFSET ?";
-    params.push(limit, (page - 1) * limit);
-
-    return this.db.all(query, params);
-  }
-
-  async create(studentData, userId) {
-    const student = new Student({ ...studentData, userId });
-
-    // Abstract: user doesn't know about GPA calculation
-    const dbData = student.toDbObject();
-
-    const result = await this.db.run(
-      `INSERT INTO students (...) VALUES (?, ?, ?, ...)`,
-      Object.values(dbData)
-    );
-
-    return { ...dbData, id: result.lastID };
-  }
-}
-
-module.exports = StudentService;
-```
-
-**Benefits:**
-
-- ✅ Controllers don't know about SQL syntax
-- ✅ Business logic separated from data access
-- ✅ Easy to swap SQLite for PostgreSQL later
-
-#### Frontend Example: Student Hook
-
-```typescript
-// filepath: frontend/src/hooks/useStudents.ts
-function useStudents() {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Abstract: component doesn't handle API calls
-  const fetchStudents = async (filters?: StudentFilters) => {
-    setLoading(true);
-    try {
-      const data = await apiClient.getStudents(filters);
-      setStudents(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createStudent = async (data: CreateStudentDTO) => {
-    const newStudent = await apiClient.createStudent(data);
-    setStudents((prev) => [newStudent, ...prev]);
-  };
-
-  return { students, loading, error, fetchStudents, createStudent };
-}
-```
-
-**Benefits:**
-
-- ✅ Components don't handle loading/error states
-- ✅ API call logic reusable across components
-- ✅ Easier to test (mock the hook)
+**What to notice:** Smooth Framer Motion spring-physics transitions between auth steps, loading spinner states during API round-trips, error boundary handling for failed OAuth callbacks.
 
 ---
 
-### 3. Inheritance
+### 📊 Part 2 — Network Analytics Dashboard (Overview Tab)
 
-**Definition:** Creating new classes from existing ones, inheriting properties and methods.
+**What you see:**
+The primary dashboard surface renders an animated KPI card grid showing total network size, direct referral counts, indirect reach, and top-line growth metrics — all driven by graph traversal computations.
 
-#### Backend Example: Base Controller
+**Technical detail:**
+- **Network reach computation** runs client-side via `utils/graphAlgorithms.js` — a BFS traversal from each root node through the adjacency list representation of the referral DAG. Time complexity: **O(V + E)** where V = users, E = referral edges.
+- **Counter animations** use Framer Motion's `useMotionValue` + `useTransform` hooks with spring physics configuration (`stiffness: 100, damping: 30`) — numbers count up from 0 to their final value on mount, with configurable duration driven by value magnitude.
+- **KPI cards** implement staggered `AnimatePresence` with `initial={{ opacity: 0, y: 20 }}` → `animate={{ opacity: 1, y: 0 }}` with `delay: index * 0.08` creating a cascading reveal on page load.
+- Data is fetched via **RTK Query** `networkApi` endpoints — automatically cached with a 5-minute TTL, deduplicated across concurrent renders, and refetched on window focus.
 
-```javascript
-// filepath: backend/src/controllers/BaseController.js
-class BaseController {
-  // Common error handling for all controllers
-  handleError(res, error, statusCode = 500) {
-    console.error(error);
-    return res.status(statusCode).json({
-      success: false,
-      error: error.message || "Internal server error",
-    });
-  }
-
-  // Common success response
-  sendSuccess(res, data, message = "Success", statusCode = 200) {
-    return res.status(statusCode).json({
-      success: true,
-      message,
-      data,
-    });
-  }
-
-  // Common validation
-  validateRequired(fields, body) {
-    const missing = fields.filter((field) => !body[field]);
-    if (missing.length > 0) {
-      throw new Error(`Missing required fields: ${missing.join(", ")}`);
-    }
-  }
-}
-
-// filepath: backend/src/controllers/StudentController.js
-class StudentController extends BaseController {
-  constructor(studentService) {
-    super(); // Call parent constructor
-    this.studentService = studentService;
-  }
-
-  async create(req, res) {
-    try {
-      // Use inherited validation method
-      this.validateRequired(
-        ["name", "status", "attendancePercentage"],
-        req.body
-      );
-
-      const student = await this.studentService.create(req.body, req.user.id);
-
-      // Use inherited success response
-      return this.sendSuccess(res, student, "Student created", 201);
-    } catch (error) {
-      // Use inherited error handling
-      return this.handleError(res, error, 400);
-    }
-  }
-}
-
-module.exports = StudentController;
-```
-
-**Benefits:**
-
-- ✅ Eliminates duplicate error handling code
-- ✅ Consistent response format across all controllers
-- ✅ Easy to add common functionality (logging, metrics)
+**What to notice:** The cascade animation on load, real-time metric cards, responsive grid collapsing on mobile viewport.
 
 ---
 
-### 4. Polymorphism
+### 👑 Part 3 — Influencer Analysis Tab
 
-**Definition:** Objects of different types can be accessed through the same interface.
+**What you see:**
+A ranked leaderboard of the most influential users in the referral network, with unique reach scores, flow centrality values, and comparative bar visualisations.
 
-#### Backend Example: Service Interface
+**Technical detail:**
+- **Greedy submodular maximisation** algorithm (`greedyInfluencers()` in `graphAlgorithms.js`) selects the top-k users maximising total unique network reach with minimum audience overlap. Approximation guarantee: **(1 - 1/e) ≈ 63% of optimal** — the standard monotone submodular function maximisation bound. Time complexity: **O(k × V²)**.
+- **Flow centrality** (`flowCentrality()`) computes all-pairs shortest paths via Floyd-Warshall — **O(V³)** — to quantify how much network flow passes through each node. High centrality = structural bottleneck = high-value influencer.
+- Influencer cards render with **Recharts `<BarChart>`** showing reach comparison, with animated bar entry using `animationDuration={800}` and `animationEasing="ease-out"`.
+- Rankings use a custom comparator prioritising `uniqueReach` descending, with `flowCentrality` as a tiebreaker.
 
-```javascript
-// filepath: backend/src/services/IService.js (interface pattern)
-class IService {
-  async findAll(userId, filters) {
-    throw new Error("Method not implemented");
-  }
-  async findById(id, userId) {
-    throw new Error("Method not implemented");
-  }
-  async create(data, userId) {
-    throw new Error("Method not implemented");
-  }
-  async update(id, data, userId) {
-    throw new Error("Method not implemented");
-  }
-  async delete(id, userId) {
-    throw new Error("Method not implemented");
-  }
-}
-
-// filepath: backend/src/services/StudentService.js
-class StudentService extends IService {
-  // Implement all methods...
-  async findAll(userId, filters) {
-    /* implementation */
-  }
-  // ...
-}
-
-// filepath: backend/src/services/TeacherService.js (hypothetical)
-class TeacherService extends IService {
-  // Different implementation, same interface
-  async findAll(userId, filters) {
-    /* different logic */
-  }
-  // ...
-}
-
-// filepath: backend/src/controllers/GenericController.js
-class GenericController {
-  constructor(service) {
-    this.service = service; // Can be StudentService or TeacherService
-  }
-
-  async getAll(req, res) {
-    // Same code works for both services (polymorphism)
-    const data = await this.service.findAll(req.user.id, req.query);
-    return res.json({ success: true, data });
-  }
-}
-```
-
-**Benefits:**
-
-- ✅ Add new entity types (Teacher, Course) without changing controller
-- ✅ Same CRUD logic for all entities
-- ✅ Easier to test (mock the service interface)
-
-#### Frontend Example: Form Components
-
-```typescript
-// Base form props interface
-interface BaseFormProps<T> {
-  onSubmit: (data: T) => Promise<void>;
-  onCancel: () => void;
-  initialData?: T;
-}
-
-// Student form
-function StudentForm({ onSubmit, onCancel, initialData }: BaseFormProps<StudentDTO>) {
-  // Implementation specific to students
-}
-
-// Teacher form (hypothetical)
-function TeacherForm({ onSubmit, onCancel, initialData }: BaseFormProps<TeacherDTO>) {
-  // Different implementation, same interface
-}
-
-// Modal wrapper (polymorphic usage)
-function FormModal<T>({ FormComponent, ...props }: { FormComponent: React.FC<BaseFormProps<T>> } & BaseFormProps<T>) {
-  return (
-    <Dialog>
-      <FormComponent {...props} />
-    </Dialog>
-  );
-}
-
-// Usage:
-<FormModal FormComponent={StudentForm} onSubmit={handleSubmitStudent} />
-<FormModal FormComponent={TeacherForm} onSubmit={handleSubmitTeacher} />
-```
-
-**Benefits:**
-
-- ✅ Reusable modal logic
-- ✅ Type-safe forms
-- ✅ Easy to add new form types
+**What to notice:** The bar charts animating in, the reach vs. centrality distinction, the ranked table with sortable columns.
 
 ---
 
-### 5. SOLID Principles
+### 📈 Part 4 — Growth Simulation Tab
 
-#### S - Single Responsibility Principle
+**What you see:**
+An interactive simulation control panel where users configure referral rate, conversion probability, days to simulate, and initial seeding — producing a live Recharts Line chart of projected network growth.
 
-**"A class should have one, and only one, reason to change."**
+**Technical detail:**
+- **Discrete-time growth simulation** (`simulateGrowth()`) models network expansion as: `users_at_day_t = users_at_day_t-1 + (active_referrers × referral_rate × conversion_prob)`. Each day's referrer count uses the prior day's active user count weighted by an adoption probability function (monotonically increasing S-curve). Time complexity: **O(days × active_referrers)**.
+- **Adoption modelling** uses a logistic growth function: `P(t) = 1 / (1 + e^(-k(t - t₀)))` where `k` controls steepness and `t₀` is the inflection point — modelling the realistic S-curve of viral product adoption.
+- **Binary search for target achievement** (`binarySearchTarget()`) — given a target user count T, binary searches over the days axis to find the minimum days D* such that `simulate(days=D*).users >= T`. Time complexity: **O(log(max_days) × simulation_cost)**.
+- The Recharts `<LineChart>` updates reactively on every slider change via `useCallback`-memoised simulation re-runs, with `animationDuration={300}` for smooth chart transitions.
 
-**Example:**
-
-```javascript
-// ❌ BAD: StudentController does too much
-class StudentController {
-  async create(req, res) {
-    // Validation
-    if (!req.body.name) return res.status(400).json({ error: "Name required" });
-
-    // Business logic
-    const gpa = (req.body.attendance * 0.4 + req.body.assignment * 0.6) / 10;
-
-    // Database access
-    const result = db.run("INSERT INTO students...", [req.body.name, gpa]);
-
-    // Response formatting
-    return res.json({ success: true, data: { id: result.lastID } });
-  }
-}
-
-// ✅ GOOD: Separated responsibilities
-class StudentValidator {
-  validate(data) {
-    if (!data.name) throw new Error("Name required");
-    // ...
-  }
-}
-
-class StudentService {
-  create(data) {
-    const student = new Student(data); // Business logic (GPA calc)
-    return this.repository.save(student);
-  }
-}
-
-class StudentController {
-  async create(req, res) {
-    try {
-      this.validator.validate(req.body);
-      const student = await this.service.create(req.body);
-      return res.json({ success: true, data: student });
-    } catch (error) {
-      return res.status(400).json({ success: false, error: error.message });
-    }
-  }
-}
-```
-
-#### O - Open/Closed Principle
-
-**"Software entities should be open for extension, but closed for modification."**
-
-**Example:**
-
-```javascript
-// ✅ GOOD: Extend without modifying
-class BaseValidator {
-  validate(data) {
-    // Common validation
-  }
-}
-
-class StudentValidator extends BaseValidator {
-  validate(data) {
-    super.validate(data); // Reuse base validation
-    // Add student-specific validation
-    if (data.attendancePercentage < 0 || data.attendancePercentage > 100) {
-      throw new Error("Invalid attendance percentage");
-    }
-  }
-}
-
-class TeacherValidator extends BaseValidator {
-  validate(data) {
-    super.validate(data);
-    // Add teacher-specific validation
-    if (!data.department) {
-      throw new Error("Department is required for teachers");
-    }
-  }
-}
-```
-
-#### L - Liskov Substitution Principle
-
-**"Objects should be replaceable with instances of their subtypes without altering correctness."**
-
-**Example:**
-
-```javascript
-// Base class contract
-class Repository {
-  async save(entity) {
-    // Must return the saved entity with an ID
-    throw new Error("Not implemented");
-  }
-}
-
-// Subclass respects contract
-class SQLiteRepository extends Repository {
-  async save(entity) {
-    const result = await this.db.run("INSERT...", entity.toDbObject());
-    return { ...entity, id: result.lastID }; // Returns entity with ID
-  }
-}
-
-class PostgreSQLRepository extends Repository {
-  async save(entity) {
-    const result = await this.pool.query(
-      "INSERT... RETURNING *",
-      entity.toDbObject()
-    );
-    return result.rows[0]; // Returns entity with ID
-  }
-}
-
-// Service works with any repository (Liskov substitution)
-class StudentService {
-  constructor(repository) {
-    this.repository = repository; // Can be SQLite or PostgreSQL
-  }
-
-  async create(data) {
-    const student = new Student(data);
-    return this.repository.save(student); // Works with both
-  }
-}
-```
-
-#### I - Interface Segregation Principle
-
-**"Clients should not be forced to depend on interfaces they don't use."**
-
-**Example:**
-
-```javascript
-// ❌ BAD: Fat interface
-interface IStudentService {
-  findAll(): Promise<Student[]>;
-  findById(id: number): Promise<Student>;
-  create(data: StudentDTO): Promise<Student>;
-  update(id: number, data: StudentDTO): Promise<Student>;
-  delete(id: number): Promise<void>;
-  exportToCSV(): Promise<string>;
-  sendEmailNotification(id: number): Promise<void>;
-  generateReport(): Promise<Buffer>;
-}
-
-// ✅ GOOD: Segregated interfaces
-interface IStudentReader {
-  findAll(): Promise<Student[]>;
-  findById(id: number): Promise<Student>;
-}
-
-interface IStudentWriter {
-  create(data: StudentDTO): Promise<Student>;
-  update(id: number, data: StudentDTO): Promise<Student>;
-  delete(id: number): Promise<void>;
-}
-
-interface IStudentExporter {
-  exportToCSV(): Promise<string>;
-}
-
-interface IStudentNotifier {
-  sendEmailNotification(id: number): Promise<void>;
-}
-
-// Implement only what you need
-class StudentService implements IStudentReader, IStudentWriter {
-  // Only implements CRUD methods
-}
-
-class StudentReportService implements IStudentExporter {
-  // Only implements export
-}
-```
-
-#### D - Dependency Inversion Principle
-
-**"Depend on abstractions, not concretions."**
-
-**Example:**
-
-```javascript
-// ❌ BAD: Direct dependency on SQLite
-class StudentService {
-  constructor() {
-    this.db = new SQLiteDatabase("data.sqlite"); // Tight coupling
-  }
-}
-
-// ✅ GOOD: Depend on abstraction
-interface IDatabase {
-  run(sql: string, params: any[]): Promise<{ lastID: number }>;
-  get(sql: string, params: any[]): Promise<any>;
-  all(sql: string, params: any[]): Promise<any[]>;
-}
-
-class SQLiteDatabase implements IDatabase {
-  run(sql, params) {
-    /* SQLite implementation */
-  }
-  get(sql, params) {
-    /* SQLite implementation */
-  }
-  all(sql, params) {
-    /* SQLite implementation */
-  }
-}
-
-class StudentService {
-  constructor(database: IDatabase) {
-    this.db = database; // Depends on interface, not implementation
-  }
-}
-
-// Can inject any database implementation
-const sqliteDb = new SQLiteDatabase("data.sqlite");
-const studentService = new StudentService(sqliteDb);
-
-// Easy to swap for PostgreSQL later
-const postgresDb = new PostgreSQLDatabase(connectionString);
-const studentService2 = new StudentService(postgresDb);
-
-// Easy to mock for testing
-const mockDb = new MockDatabase();
-const studentServiceForTesting = new StudentService(mockDb);
-```
+**What to notice:** Real-time chart update on slider drag, the S-curve shape of realistic growth, the target-day binary search marker on the chart.
 
 ---
 
-## Design Patterns
+### 💰 Part 5 — Bonus Optimisation Tab
 
-### 1. Repository Pattern
+**What you see:**
+A scenario comparison table and bar chart showing the minimum bonus value required to achieve different user acquisition targets, computed via binary search over the simulation function.
 
-**Purpose:** Abstract data access logic, provide a collection-like interface.
+**Technical detail:**
+- **Bonus optimisation** (`optimiseBonus()`) wraps the growth simulation in a binary search over the bonus range `[0, MAX_BONUS]`. For each candidate bonus `mid`, runs the full simulation and checks if `result.users >= target`. Converges in **O(log(MAX_BONUS))** iterations, each costing one simulation run.
+- Multiple target scenarios are computed in parallel using JavaScript's event loop — each scenario's binary search is initiated as a separate synchronous computation, results collected and rendered as a comparative bar chart.
+- **ROI analysis** computes `cost_per_acquired_user = optimal_bonus × projected_acquirees` for each scenario, surfacing the most capital-efficient bonus tier.
 
-**Implementation:**
-
-```javascript
-// filepath: backend/src/repositories/StudentRepository.js
-class StudentRepository {
-  constructor(db) {
-    this.db = db;
-  }
-
-  async findAll(filters = {}) {
-    const { userId, status, page = 1, limit = 10 } = filters;
-    let sql = "SELECT * FROM students WHERE user_id = ?";
-    const params = [userId];
-
-    if (status) {
-      sql += " AND status = ?";
-      params.push(status);
-    }
-
-    sql += " LIMIT ? OFFSET ?";
-    params.push(limit, (page - 1) * limit);
-
-    const rows = await this.db.all(sql, params);
-    return rows.map((row) => this.mapToEntity(row));
-  }
-
-  async findById(id, userId) {
-    const row = await this.db.get(
-      "SELECT * FROM students WHERE id = ? AND user_id = ?",
-      [id, userId]
-    );
-    return row ? this.mapToEntity(row) : null;
-  }
-
-  async save(student) {
-    if (student.id) {
-      return this.update(student);
-    } else {
-      return this.insert(student);
-    }
-  }
-
-  async insert(student) {
-    const data = student.toDbObject();
-    const result = await this.db.run(
-      `INSERT INTO students (user_id, name, status, ...) VALUES (?, ?, ?, ...)`,
-      Object.values(data)
-    );
-    return this.findById(result.lastID, student.userId);
-  }
-
-  async update(student) {
-    const data = student.toDbObject();
-    await this.db.run(
-      `UPDATE students SET name = ?, status = ?, ... WHERE id = ? AND user_id = ?`,
-      [...Object.values(data), student.id, student.userId]
-    );
-    return this.findById(student.id, student.userId);
-  }
-
-  async delete(id, userId) {
-    await this.db.run("DELETE FROM students WHERE id = ? AND user_id = ?", [
-      id,
-      userId,
-    ]);
-  }
-
-  // Map database row to domain entity
-  mapToEntity(row) {
-    return new Student({
-      id: row.id,
-      userId: row.user_id,
-      name: row.name,
-      status: row.status,
-      isScholarship: Boolean(row.is_scholarship),
-      attendancePercentage: row.attendance_percentage,
-      assignmentScore: row.assignment_score,
-      gradePointAverage: row.grade_point_average,
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at),
-    });
-  }
-}
-
-module.exports = StudentRepository;
-```
-
-**Benefits:**
-
-- ✅ Service layer doesn't know about SQL
-- ✅ Easy to swap databases
-- ✅ Centralized mapping logic
-- ✅ Testable (mock repository)
+**What to notice:** The comparison across different target tiers, the ROI efficiency metric, bar chart scenario comparison.
 
 ---
 
-### 2. Service Layer Pattern
+### 🏀 Part 6 — Sports Props Research (NBA / NFL / Soccer)
 
-**Purpose:** Encapsulate business logic, coordinate between repositories and controllers.
+**What you see:**
+A date-scoped fixture list for NBA, NFL, and Soccer (BETA), with per-fixture player prop cards showing hit rates, odds comparison, EV scores, and matchup grades — all fetched in real time from the Django backend.
 
-**Implementation:**
+**Technical detail:**
+- **RTK Query** `fixturesApi` fetches `GET /api/nba/fixtures/?date=YYYY-MM-DD` — the selected date flows through React Router's URL search params, making the fixture view deep-linkable and browser-history-aware.
+- **Prop cards** display `hit_rate_l5`, `hit_rate_l10`, `hit_rate_season` from the backend's pre-computed splits, along with `ev_score` (Expected Value %) and `matchup_grade` (A+ → F) served directly from the Django `NBAPlayerProp` model's serialized representation.
+- **EV Badge** component classifies `ev_score` into visual tiers: > +8% → 🟢 green, +4–8% → 🟡 yellow, +1–4% → ⚪ grey, negative → 🔴 hidden.
+- **Odds table** renders multi-book over/under comparison with inline vig (juice) calculation: `vig = P_over_implied + P_under_implied - 1.0`.
+- Date navigation uses `date-fns` for ISO 8601 date arithmetic, with prev/next day controls updating the RTK Query cache key and triggering a background refetch.
 
-```javascript
-// filepath: backend/src/services/StudentService.js
-class StudentService {
-  constructor(studentRepository, userRepository) {
-    this.studentRepository = studentRepository;
-    this.userRepository = userRepository;
-  }
-
-  async createStudent(data, userId) {
-    // Business rule: check user exists
-    const user = await this.userRepository.findById(userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    // Business rule: validate data
-    this.validateStudentData(data);
-
-    // Create domain entity (encapsulates GPA calculation)
-    const student = new Student({ ...data, userId });
-
-    // Save via repository
-    return this.studentRepository.save(student);
-  }
-
-  async updateStudent(id, data, userId) {
-    // Business rule: student must exist and belong to user
-    const existing = await this.studentRepository.findById(id, userId);
-    if (!existing) {
-      throw new Error("Student not found or access denied");
-    }
-
-    // Business rule: validate updates
-    this.validateStudentData(data, true);
-
-    // Update entity (GPA recalculated if scores changed)
-    existing.update(data);
-
-    return this.studentRepository.save(existing);
-  }
-
-  async getStatistics(userId) {
-    const students = await this.studentRepository.findAll({ userId });
-
-    // Business logic: calculate stats
-    return {
-      total: students.length,
-      active: students.filter((s) => s.status === "active").length,
-      withScholarship: students.filter((s) => s.isScholarship).length,
-      averageGPA:
-        students.reduce((sum, s) => sum + s.gpa, 0) / students.length || 0,
-    };
-  }
-
-  validateStudentData(data, isUpdate = false) {
-    // Business rules
-    if (!isUpdate && !data.name) {
-      throw new Error("Name is required");
-    }
-    if (data.attendancePercentage < 0 || data.attendancePercentage > 100) {
-      throw new Error("Attendance must be between 0 and 100");
-    }
-    // ...
-  }
-}
-
-module.exports = StudentService;
-```
-
-**Benefits:**
-
-- ✅ Business logic separated from data access
-- ✅ Reusable across controllers (REST API, GraphQL, CLI)
-- ✅ Easy to test (mock repositories)
-- ✅ Single place for business rules
+**What to notice:** The date selector updating all fixtures, prop card EV badge colouring, hit rate trend across L5/L10/season windows, matchup grade badge.
 
 ---
 
-### 3. Middleware Pattern
+## 🌐 Project Overview
 
-**Purpose:** Process requests in a pipeline before reaching controllers.
+This repository is the **client-side application** of the Statyx platform — a React 18 SPA consuming the [statyx-Backend](https://github.com/vk93102/statyx-Backend) Django REST API over CORS-permitted HTTPS.
 
-**Implementation:**
+The frontend's architectural responsibility is split into three orthogonal domains:
 
-```javascript
-// filepath: backend/src/middleware/auth.js
-function authenticate(req, res, next) {
-  try {
-    const token = req.headers.authorization?.replace("Bearer ", "");
-    if (!token) {
-      return res.status(401).json({ error: "Token required" });
-    }
+**1. Graph Analytics Computation & Visualisation** — All referral network graph algorithms (BFS, DFS, greedy selection, Floyd-Warshall centrality, discrete-time simulation, binary search optimisation) execute in the browser, in `utils/graphAlgorithms.js`, with results piped directly into Recharts visualisations via React state — zero server round-trips for computation, only for data persistence.
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Attach user to request
-    next(); // Continue to next middleware/controller
-  } catch (error) {
-    return res.status(403).json({ error: "Invalid token" });
-  }
-}
+**2. Sports Props Research UI** — A server-state-driven interface consuming the Django props API via RTK Query, with automatic caching, background refetching, and optimistic updates. Presents pre-computed EV scores, hit rates, matchup grades, and multi-book odds without client-side analytics computation.
 
-// filepath: backend/src/middleware/validate.js
-function validateStudent(req, res, next) {
-  const { name, status, attendancePercentage, assignmentScore } = req.body;
-
-  if (!name || name.trim() === "") {
-    return res.status(400).json({ error: "Name is required" });
-  }
-
-  if (!["active", "inactive", "graduated"].includes(status)) {
-    return res.status(400).json({ error: "Invalid status" });
-  }
-
-  if (attendancePercentage < 0 || attendancePercentage > 100) {
-    return res.status(400).json({ error: "Attendance must be 0-100" });
-  }
-
-  if (assignmentScore < 0 || assignmentScore > 100) {
-    return res.status(400).json({ error: "Assignment score must be 0-100" });
-  }
-
-  next(); // Validation passed
-}
-
-// filepath: backend/src/routes/students.js
-router.post(
-  "/students",
-  authenticate,
-  validateStudent,
-  studentController.create
-);
-//                        ^^^^^^^^^^^  ^^^^^^^^^^^^^^  Request flows through middlewares
-```
-
-**Benefits:**
-
-- ✅ Reusable validation logic
-- ✅ Separation of concerns (auth, validation, logging)
-- ✅ Easy to add/remove middleware
-- ✅ Clean controller code
+**3. Multi-Provider Authentication Shell** — OAuth 2.0 callback handling, Twilio OTP verification flow, and session-cookie-based auth state management — bridging three identity providers through a unified Django session backend.
 
 ---
 
-### 4. Factory Pattern
-
-**Purpose:** Create objects without specifying exact class.
-
-**Implementation:**
-
-```javascript
-// filepath: backend/src/factories/ResponseFactory.js
-class ResponseFactory {
-  static success(data, message = "Success", statusCode = 200) {
-    return {
-      success: true,
-      message,
-      data,
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  static error(error, statusCode = 500) {
-    return {
-      success: false,
-      error: error.message || "Internal server error",
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  static validationError(errors) {
-    return {
-      success: false,
-      error: "Validation failed",
-      errors,
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  static paginatedResponse(data, page, limit, total) {
-    return {
-      success: true,
-      data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-      timestamp: new Date().toISOString(),
-    };
-  }
-}
-
-// Usage in controller
-class StudentController {
-  async getAll(req, res) {
-    const { page = 1, limit = 10 } = req.query;
-    const students = await this.service.findAll(req.user.id, req.query);
-    const total = await this.service.count(req.user.id);
-
-    return res.json(
-      ResponseFactory.paginatedResponse(students, page, limit, total)
-    );
-  }
-
-  async create(req, res) {
-    try {
-      const student = await this.service.create(req.body, req.user.id);
-      return res
-        .status(201)
-        .json(ResponseFactory.success(student, "Student created", 201));
-    } catch (error) {
-      return res.status(400).json(ResponseFactory.error(error, 400));
-    }
-  }
-}
-```
-
-**Benefits:**
-
-- ✅ Consistent response format
-- ✅ Easy to change response structure globally
-- ✅ Self-documenting (clear intent)
-
----
-
-### 5. Singleton Pattern
-
-**Purpose:** Ensure only one instance of a class exists.
-
-**Implementation:**
-
-```javascript
-// filepath: backend/db.js
-const Database = require("better-sqlite3");
-
-class DatabaseConnection {
-  constructor() {
-    if (DatabaseConnection.instance) {
-      return DatabaseConnection.instance; // Return existing instance
-    }
-
-    this.db = new Database("data.sqlite");
-    this.db.pragma("journal_mode = WAL"); // Performance optimization
-
-    DatabaseConnection.instance = this;
-  }
-
-  run(sql, params = []) {
-    return this.db.prepare(sql).run(params);
-  }
-
-  get(sql, params = []) {
-    return this.db.prepare(sql).get(params);
-  }
-
-  all(sql, params = []) {
-    return this.db.prepare(sql).all(params);
-  }
-
-  close() {
-    this.db.close();
-    DatabaseConnection.instance = null;
-  }
-}
-
-// Export single instance
-module.exports = new DatabaseConnection();
-```
-
-**Benefits:**
-
-- ✅ Only one database connection
-- ✅ Connection reused across entire app
-- ✅ Prevents connection leaks
-
----
-
-## Backend Architecture
-
-### Directory Structure
+## 🏗️ Frontend Architecture
 
 ```
-backend/
-├── src/
-│   ├── controllers/           # HTTP request handlers
-│   │   ├── BaseController.js  # Abstract base class
-│   │   ├── AuthController.js  # Signup, login
-│   │   └── StudentController.js  # Student CRUD
-│   │
-│   ├── services/              # Business logic
-│   │   ├── AuthService.js     # JWT generation, password hashing
-│   │   └── StudentService.js  # Student business rules
-│   │
-│   ├── repositories/          # Data access
-│   │   ├── UserRepository.js
-│   │   └── StudentRepository.js
-│   │
-│   ├── models/                # Domain entities
-│   │   ├── User.js
-│   │   └── Student.js
-│   │
-│   ├── middleware/            # Request processing pipeline
-│   │   ├── auth.js            # JWT verification
-│   │   ├── validate.js        # Input validation
-│   │   ├── errorHandler.js    # Global error handling
-│   │   └── cors.js            # CORS configuration
-│   │
-│   ├── routes/                # API route definitions
-│   │   ├── auth.js            # /auth/signup, /auth/login
-│   │   └── students.js        # /api/students/*
-│   │
-│   ├── utils/                 # Helper functions
-│   │   ├── ResponseFactory.js
-│   │   └── logger.js
-│   │
-│   └── config/                # Configuration
-│       └── database.js
+Browser (statyx.io)
 │
-├── tests/                     # Test suite
-│   ├── testing.sh             # Bash test runner
-│   └── README.md
+├── index.html                     ← Vite entry point, single DOM mount target
 │
-├── db.js                      # Database singleton
-├── init-db.js                 # Database initialization script
-├── server.js                  # Express app entry point
-├── package.json
-└── .env                       # Environment variables
-```
-
-### Request Flow
-
-```
-HTTP Request
+└── main.jsx                       ← React.createRoot() + Redux Provider
     │
-    ▼
-┌────────────────────────┐
-│  Express Middleware    │
-│  - CORS                │
-│  - Body Parser         │
-│  - Logging             │
-└────────┬───────────────┘
-         │
-         ▼
-┌────────────────────────┐
-│  Authentication        │
-│  - JWT verification    │
-│  - req.user populated  │
-└────────┬───────────────┘
-         │
-         ▼
-┌────────────────────────┐
-│  Validation            │
-│  - Check required      │
-│  - Type checking       │
-│  - Range validation    │
-└────────┬───────────────┘
-         │
-         ▼
-┌────────────────────────┐
-│  Controller            │
-│  - Parse request       │
-│  - Call service        │
-│  - Format response     │
-└────────┬───────────────┘
-         │
-         ▼
-┌────────────────────────┐
-│  Service               │
-│  - Business logic      │
-│  - Call repository     │
-│  - Return data         │
-└────────┬───────────────┘
-         │
-         ▼
-┌────────────────────────┐
-│  Repository            │
-│  - Build SQL query     │
-│  - Execute query       │
-│  - Map to entity       │
-└────────┬───────────────┘
-         │
-         ▼
-┌────────────────────────┐
-│  Database              │
-│  - Execute query       │
-│  - Return rows         │
-└────────┬───────────────┘
-         │
-         ▼
-    JSON Response
+    └── App.jsx                    ← React Router v6 BrowserRouter
+        │
+        ├── /auth/*                ← Public routes (no session required)
+        │   ├── /sign-in           → <SignIn />
+        │   ├── /sign-up           → <SignUp />
+        │   ├── /verify-otp        → <OTPVerify />
+        │   └── /auth/*/callback   → <OAuthCallback />
+        │
+        └── /app/*                 ← Protected routes (session required)
+            │
+            ├── Layout wrapper     ← Sidebar nav + dark sidebar dock
+            │
+            ├── /app/overview      → <Overview />      Network KPIs
+            ├── /app/influencers   → <Influencers />   Ranked table
+            ├── /app/simulation    → <Simulation />    Growth sim
+            ├── /app/optimization  → <Optimization />  Bonus optimiser
+            ├── /app/nba           → <NBAProps />       NBA fixtures + props
+            ├── /app/nfl           → <NFLProps />       NFL fixtures + props
+            └── /app/soccer        → <SoccerProps />    Soccer fixtures
+```
+
+### Data Flow Architecture
+
+```
+User Interaction
+      │
+      ▼
+React Component
+      │
+      ├── Local state (useState / useReducer)
+      │         └── UI-only: modal open, input value, tab selection
+      │
+      ├── Redux slice dispatch (createSlice)
+      │         └── Cross-component: auth state, selected date, active sport
+      │
+      └── RTK Query hook (useGetFixturesQuery / useGetPropsQuery)
+                └── Server state: fixtures, props, network graph data
+                          │
+                          ├── Cache HIT  → renders immediately
+                          └── Cache MISS → fetch → normalise → cache → render
+                                    │
+                                    ▼
+                              Django REST API
+                              (statyx-Backend on Render.com)
+                                    │
+                                    ▼
+                              PostgreSQL 15
 ```
 
 ---
 
-## Frontend Architecture
-
-### Component Hierarchy
+## 🧩 Component Hierarchy
 
 ```
-App
- │
- ├── AuthProvider (Context)
- │    │
- │    ├── Login Page
- │    │    └── Auth Component
- │    │
- │    └── Dashboard Page
- │         ├── Header
- │         │    ├── Logo
- │         │    ├── SearchBar
- │         │    └── UserMenu
- │         │
- │         ├── StatsCards (4 cards)
- │         │    ├── TotalStudents
- │         │    ├── ActiveStudents
- │         │    ├── Scholarships
- │         │    └── AverageGPA
- │         │
- │         ├── Filters
- │         │    ├── StatusFilter
- │         │    ├── ScholarshipFilter
- │         │    └── SortDropdown
- │         │
- │         ├── StudentsTable
- │         │    ├── TableHeader
- │         │    │    ├── SortableColumn (Name)
- │         │    │    ├── SortableColumn (Email)
- │         │    │    └── ...
- │         │    │
- │         │    └── StudentRow (repeated)
- │         │         ├── NameCell
- │         │         ├── StatusBadge
- │         │         ├── GPAProgress
- │         │         └── ActionButtons
- │         │              ├── EditButton
- │         │              └── DeleteButton
- │         │
- │         ├── Pagination
- │         │    ├── PrevButton
- │         │    ├── PageNumbers
- │         │    └── NextButton
- │         │
- │         └── StudentModal
- │              ├── Form
- │              │    ├── NameInput
- │              │    ├── EmailInput
- │              │    ├── StatusSelect
- │              │    ├── ScholarshipCheckbox
- │              │    ├── AttendanceInput
- │              │    └── AssignmentInput
- │              │
- │              └── FormActions
- │                   ├── SubmitButton
- │                   └── CancelButton
+App.jsx
+├── AuthGuard (HOC)                    Session validation wrapper
+│   └── ProtectedRoute                 Redirects unauthenticated users
+│
+├── Sidebar                            Dark nav panel
+│   ├── NavLink × 7                    Sport + dashboard links
+│   └── FloatingDock                   Collapsed action controls
+│
+├── Dashboard Pages
+│   │
+│   ├── Overview
+│   │   ├── KPICard × 4               Animated metric cards (Framer Motion)
+│   │   ├── ReachChart                 Recharts BarChart — reach distribution
+│   │   └── GrowthTrendLine            Recharts LineChart — historical growth
+│   │
+│   ├── Influencers
+│   │   ├── InfluencerTable            Sortable ranked table
+│   │   │   └── InfluencerRow × n      Per-user row with reach + centrality
+│   │   └── ReachBarChart              Recharts BarChart — comparative reach
+│   │
+│   ├── Simulation
+│   │   ├── SimControls                Slider panel (rate, prob, days)
+│   │   ├── GrowthLineChart            Recharts LineChart — projected growth
+│   │   └── TargetMarker               Binary-search result annotation
+│   │
+│   └── Optimization
+│       ├── ScenarioTable              Target tier comparison table
+│       ├── BonusBarChart              Recharts BarChart — bonus per scenario
+│       └── ROIMetricCard              Cost-per-acquisition metric
+│
+└── Sports Pages
+    ├── NBAProps / NFLProps / SoccerProps
+    │   ├── DateSelector               ISO 8601 date nav (date-fns)
+    │   ├── FixtureList                Fetched via RTK Query
+    │   │   └── FixtureCard × n
+    │   │       └── PropList
+    │   │           └── PropCard × n
+    │   │               ├── PlayerInfo
+    │   │               ├── HitRateBar (L5 / L10 / season)
+    │   │               ├── OddsTable  (multi-book over/under + vig)
+    │   │               └── EVBadge    (classified EV%)
+    │   └── LoadingSkeletons           Framer Motion skeleton screens
+    │
+    └── Shared
+        ├── PropCard
+        ├── OddsTable
+        ├── EVBadge
+        └── MatchupGradeBadge
 ```
+
+---
+
+## 🛠 Tech Stack Deep Dive
+
+### Core Framework
+
+**React 18** with concurrent mode features — `useTransition` for deferring non-urgent state updates during simulation re-renders, `Suspense` boundaries wrapping RTK Query data-fetching components for declarative loading states, and `React.memo` + `useMemo` for referential equality optimisation on expensive chart re-renders.
+
+**TypeScript 5 (strict mode)** — `tsconfig.json` enables `"strict": true`, `"noUncheckedIndexedAccess": true`, `"exactOptionalPropertyTypes": true`. All API response shapes are typed via discriminated union interfaces. All component props are typed with no implicit `any`. Graph algorithm return types are fully annotated.
+
+### Build Tooling
+
+**Vite 5 with SWC** (`@vitejs/plugin-react-swc`) — Rust-native TypeScript/JSX transpiler replacing Babel. SWC is ~20× faster than Babel for large codebases. Vite's native ESM dev server eliminates the bundling step entirely during development — each module is served as a raw ES module, enabling true sub-10ms HMR for individual component edits.
+
+Production build produces **tree-shaken ES module bundles** with automatic code-splitting at the route boundary — each dashboard tab is a separate dynamic import chunk, ensuring the initial page load only downloads the authentication shell (~40KB gzip) with remaining chunks loaded on-demand.
+
+**ESLint** with strict configuration (`eslint.config.js`) — enforces consistent import ordering, no unused variables, exhaustive dependency arrays in `useEffect`/`useCallback`/`useMemo`, and React-specific rules (no missing keys, no direct state mutation).
 
 ### State Management
 
-```typescript
-// Global State (Context API)
-interface AuthContext {
-  user: User | null;
-  token: string | null;
-  login: (username: string, password: string) => Promise<void>;
-  logout: () => void;
-  isAuthenticated: boolean;
-}
-
-// Local State (useState in Dashboard)
-interface DashboardState {
-  students: Student[];
-  filteredStudents: Student[];
-  currentPage: number;
-  filters: {
-    status: string;
-    scholarship: boolean | null;
-    search: string;
-  };
-  sortBy: string;
-  sortOrder: "asc" | "desc";
-  isModalOpen: boolean;
-  editingStudent: Student | null;
-  stats: Statistics;
-  loading: boolean;
-  error: string | null;
-}
-
-// Derived State (useMemo)
-const paginatedStudents = useMemo(() => {
-  const start = (currentPage - 1) * ITEMS_PER_PAGE;
-  return filteredStudents.slice(start, start + ITEMS_PER_PAGE);
-}, [filteredStudents, currentPage]);
-
-const totalPages = useMemo(() => {
-  return Math.ceil(filteredStudents.length / ITEMS_PER_PAGE);
-}, [filteredStudents.length]);
-```
-
-### Data Flow
+**Redux Toolkit (`@reduxjs/toolkit`)** — The global state store uses `configureStore` with three slices:
 
 ```
-User Action (e.g., Create Student)
-    │
-    ▼
-Event Handler in Component
-    │
-    ▼
-Validation (client-side)
-    │
-    ▼
-API Call (axios)
-    │
-    ▼
-Backend Processing
-    │
-    ▼
-Response Received
-    │
-    ▼
-Update Local State (setStudents)
-    │
-    ▼
-Re-render Component
-    │
-    ▼
-Show Success Toast
+authSlice        — {user, sessionStatus, oauthProvider, loadingState}
+networkSlice     — {nodes, edges, computedMetrics, selectedSimConfig}
+uiSlice          — {selectedDate, activeSport, sidebarCollapsed}
 ```
 
----
+All slices use **Immer-powered reducers** (built into RTK) — mutable-style state updates that produce immutable state via structural sharing, eliminating accidental mutation bugs.
 
-## Security Architecture
-
-### Authentication Flow
-
-```
-┌──────────┐                  ┌──────────┐                  ┌──────────┐
-│ Frontend │                  │ Backend  │                  │ Database │
-└────┬─────┘                  └────┬─────┘                  └────┬─────┘
-     │                             │                             │
-     │ POST /auth/signup           │                             │
-     ├────────────────────────────>│                             │
-     │ {username, password}        │                             │
-     │                             │ hash password (bcrypt)      │
-     │                             │────────┐                    │
-     │                             │        │                    │
-     │                             │<───────┘                    │
-     │                             │                             │
-     │                             │ INSERT user                 │
-     │                             ├────────────────────────────>│
-     │                             │                             │
-     │                             │<────────────────────────────┤
-     │                             │ user created                │
-     │<────────────────────────────┤                             │
-     │ 201 Created                 │                             │
-     │                             │                             │
-     │ POST /auth/login            │                             │
-     ├────────────────────────────>│                             │
-     │ {username, password}        │                             │
-     │                             │ SELECT user                 │
-     │                             ├────────────────────────────>│
-     │                             │                             │
-     │                             │<────────────────────────────┤
-     │                             │ user record                 │
-     │                             │                             │
-     │                             │ verify password (bcrypt)    │
-     │                             │────────┐                    │
-     │                             │        │                    │
-     │                             │<───────┘                    │
-     │                             │                             │
-     │                             │ generate JWT                │
-     │                             │────────┐                    │
-     │                             │        │                    │
-     │                             │<───────┘                    │
-     │<────────────────────────────┤                             │
-     │ { token: "eyJ..." }         │                             │
-     │                             │                             │
-     │ save token to localStorage  │                             │
-     │────────┐                    │                             │
-     │        │                    │                             │
-     │<───────┘                    │                             │
-     │                             │                             │
-     │ GET /api/students           │                             │
-     │ Authorization: Bearer token │                             │
-     ├────────────────────────────>│                             │
-     │                             │ verify JWT                  │
-     │                             │────────┐                    │
-     │                             │        │                    │
-     │                             │<───────┘                    │
-     │                             │                             │
-     │                             │ extract userId from token   │
-     │                             │────────┐                    │
-     │                             │        │                    │
-     │                             │<───────┘                    │
-     │                             │                             │
-     │                             │ SELECT students WHERE       │
-     │                             │ user_id = ?                 │
-     │                             ├────────────────────────────>│
-     │                             │                             │
-     │                             │<────────────────────────────┤
-     │<────────────────────────────┤ students                    │
-     │ { data: [...] }             │                             │
-     │                             │                             │
-```
-
-### Security Measures
-
-| Layer                | Measure             | Implementation                           |
-| -------------------- | ------------------- | ---------------------------------------- |
-| **Transport**        | HTTPS               | SSL/TLS certificate on Render/Vercel     |
-| **Authentication**   | JWT                 | jsonwebtoken library, 8-hour expiration  |
-| **Password Storage** | Hashing             | bcrypt with salt rounds = 10             |
-| **Authorization**    | User-scoped queries | `WHERE user_id = ?` in all queries       |
-| **Input Validation** | Middleware          | Validate types, ranges, required fields  |
-| **SQL Injection**    | Prepared statements | Parameterized queries (`?` placeholders) |
-| **XSS**              | React escaping      | React auto-escapes JSX                   |
-| **CORS**             | Whitelist           | Only allow frontend origin               |
-| **Rate Limiting**    | (TODO)              | Recommend express-rate-limit             |
-
----
-
-## Performance Optimizations
-
-### Backend Optimizations
-
-1. **Database Indexing:**
-   ```sql
-   CREATE INDEX idx_students_user_id ON students(user_id);
-   CREATE// filepath: /Users/vishaljha/Desktop/Take Home AI/docs/ARCHITECTURE.md
-   ```
-
-# 🏗️ Architecture & Design Decisions
-
-Comprehensive documentation of architectural choices, OOP principles, design patterns, and technical reasoning.
-
-## Table of Contents
-
-1. [Architecture Overview](#architecture-overview)
-2. [Technology Stack Reasoning](#technology-stack-reasoning)
-3. [OOP Principles Implementation](#oop-principles-implementation)
-4. [Design Patterns](#design-patterns)
-5. [Backend Architecture](#backend-architecture)
-6. [Frontend Architecture](#frontend-architecture)
-7. [Security Architecture](#security-architecture)
-8. [Performance Optimizations](#performance-optimizations)
-
----
-
-## Architecture Overview
-
-### High-Level Architecture
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         CLIENT LAYER                         │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  React Frontend (TypeScript)                          │  │
-│  │  - Components (UI)                                    │  │
-│  │  - State Management (useState, useEffect)            │  │
-│  │  - API Client (Axios)                                │  │
-│  │  - Routing (React Router)                            │  │
-│  └───────────────────────────────────────────────────────┘  │
-└──────────────────────┬──────────────────────────────────────┘
-                       │ HTTPS/JSON
-                       │ JWT Token in Header
-┌──────────────────────▼──────────────────────────────────────┐
-│                      API GATEWAY LAYER                       │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  Express.js Server                                    │  │
-│  │  - CORS Middleware                                    │  │
-│  │  - JWT Authentication Middleware                      │  │
-│  │  - Request Validation Middleware                      │  │
-│  │  - Error Handling Middleware                          │  │
-│  └───────────────────────────────────────────────────────┘  │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────────────┐
-│                    BUSINESS LOGIC LAYER                      │
-│  ┌─────────────┐  ┌─────────────┐  ┌──────────────┐        │
-│  │ Controllers │  │  Services   │  │  Validators  │        │
-│  │ (Routes)    │──│  (Logic)    │──│  (Rules)     │        │
-│  └─────────────┘  └─────────────┘  └──────────────┘        │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────────────┐
-│                       DATA ACCESS LAYER                      │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  Models (ORM-like)                                    │  │
-│  │  - Student Model                                      │  │
-│  │  - User Model                                         │  │
-│  │  - Database Helper (SQLite wrapper)                  │  │
-│  └───────────────────────────────────────────────────────┘  │
-└──────────────────────┬──────────────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────────────┐
-│                      PERSISTENCE LAYER                       │
-│  ┌───────────────────────────────────────────────────────┐  │
-│  │  SQLite Database (data.sqlite)                        │  │
-│  │  - users table                                        │  │
-│  │  - students table                                     │  │
-│  └───────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Architecture Style
-
-**Chosen:** **Layered (N-Tier) Architecture** with **RESTful API** design
-
-**Reasons:**
-
-1. **Separation of Concerns:** Each layer has a specific responsibility
-2. **Testability:** Layers can be tested independently
-3. **Maintainability:** Changes in one layer don't affect others
-4. **Scalability:** Layers can be scaled independently
-5. **Industry Standard:** Well-understood pattern with extensive documentation
-
-**Benefits:**
-
-- ✅ Clear boundaries between presentation, business logic, and data
-- ✅ Easy to add new features without breaking existing code
-- ✅ Supports multiple clients (web, mobile) using the same API
-- ✅ Enables parallel development (frontend/backend teams)
-
----
-
-## Technology Stack Reasoning
-
-### Backend: Express.js + SQLite
-
-#### Why Express.js?
-
-| Factor          | Reason                                                   |
-| --------------- | -------------------------------------------------------- |
-| **Maturity**    | Battle-tested framework with 10+ years of production use |
-| **Ecosystem**   | Massive npm ecosystem (400,000+ packages)                |
-| **Performance** | Non-blocking I/O, handles 10,000+ req/sec easily         |
-| **Simplicity**  | Minimal boilerplate, quick to set up                     |
-| **Flexibility** | No opinionated structure, choose your own patterns       |
-| **Community**   | Large community, extensive documentation                 |
-
-**Alternatives Considered:**
-
-- **Django (Python):** Rejected due to heavier runtime, slower for small projects
-- **Spring Boot (Java):** Rejected due to verbose syntax, longer dev time
-- **FastAPI (Python):** Rejected due to less mature ecosystem
-- **NestJS (Node):** Rejected due to complexity overkill for this project size
-
-#### Why SQLite?
-
-| Factor                 | Reason                                           |
-| ---------------------- | ------------------------------------------------ |
-| **Zero Configuration** | No separate database server needed               |
-| **Portability**        | Single file database, easy to backup/move        |
-| **Performance**        | Faster than client-server DBs for < 100K records |
-| **Reliability**        | ACID compliant, used in billions of devices      |
-| **Development Speed**  | No network latency, instant queries              |
-
-**Production Readiness:**
-
-- ✅ Handles 100,000+ queries/sec
-- ✅ Supports up to 281 TB database size
-- ✅ Used by Apple, Google, Microsoft in production
-- ⚠️ **Limitation:** Single-writer (fine for < 100 concurrent writes/sec)
-
-**When to Migrate to PostgreSQL:**
-
-- User base > 10,000 concurrent users
-- Multiple app servers (horizontal scaling)
-- Need for advanced features (full-text search, JSON queries)
-
-### Frontend: React + Vite + TypeScript
-
-#### Why React?
-
-| Factor                    | Reason                                                |
-| ------------------------- | ----------------------------------------------------- |
-| **Component Reusability** | Build once, use everywhere                            |
-| **Virtual DOM**           | Efficient updates, smooth UI                          |
-| **Ecosystem**             | Largest library ecosystem (shadcn/ui, Recharts, etc.) |
-| **Developer Experience**  | Fast refresh, great dev tools                         |
-| **Hiring Pool**           | Largest pool of frontend developers                   |
-
-**Alternatives Considered:**
-
-- **Vue.js:** Rejected due to smaller ecosystem
-- **Angular:** Rejected due to steep learning curve, verbosity
-- **Svelte:** Rejected due to smaller community, fewer libraries
-
-#### Why Vite?
-
-| Factor         | Reason                                              |
-| -------------- | --------------------------------------------------- |
-| **Speed**      | 10-100x faster than Webpack (cold start < 1 second) |
-| **Modern**     | Native ESM, no bundling in dev                      |
-| **HMR**        | Instant hot module replacement                      |
-| **Build Size** | Optimized production builds (Rollup-based)          |
-
-**vs Webpack:**
-
-- Development server startup: **0.8s (Vite)** vs **15s (Webpack)**
-- Hot reload: **< 50ms (Vite)** vs **500ms+ (Webpack)**
-
-#### Why TypeScript?
-
-| Factor              | Benefit                                   |
-| ------------------- | ----------------------------------------- |
-| **Type Safety**     | Catch errors at compile time, not runtime |
-| **IntelliSense**    | Auto-complete, refactoring support        |
-| **Documentation**   | Types serve as inline documentation       |
-| **Maintainability** | Easier to refactor large codebases        |
-
-**Developer Productivity:**
-
-- 15% fewer bugs in production (Microsoft study)
-- 20% faster development with large teams
-- Better IDE support (VS Code, WebStorm)
-
----
-
-## OOP Principles Implementation
-
-### 1. Encapsulation
-
-**Definition:** Bundling data and methods that operate on data within a single unit (class), hiding internal state.
-
-#### Backend Example: Student Model
+**RTK Query** — Eliminates manual `useEffect` + `fetch` + loading/error state boilerplate. Each API endpoint definition auto-generates typed React hooks:
 
 ```javascript
-// filepath: backend/src/models/Student.js
-class Student {
-  constructor(data) {
-    // Private-like properties (convention: prefix with _)
-    this._id = data.id;
-    this._name = data.name;
-    this._status = data.status;
-    this._attendancePercentage = data.attendancePercentage;
-    this._assignmentScore = data.assignmentScore;
-
-    // Encapsulated: GPA is calculated, not stored
-    this._gpa = this.calculateGPA();
-  }
-
-  // Public getter methods (read-only access)
-  get id() {
-    return this._id;
-  }
-  get name() {
-    return this._name;
-  }
-  get gpa() {
-    return this._gpa;
-  }
-
-  // Private method (encapsulated business logic)
-  calculateGPA() {
-    return (
-      (this._attendancePercentage * 0.4 + this._assignmentScore * 0.6) / 10
-    );
-  }
-
-  // Public method with validation
-  updateScores(attendance, assignment) {
-    if (attendance < 0 || attendance > 100) {
-      throw new Error("Attendance must be 0-100");
-    }
-    if (assignment < 0 || assignment > 100) {
-      throw new Error("Assignment score must be 0-100");
-    }
-    this._attendancePercentage = attendance;
-    this._assignmentScore = assignment;
-    this._gpa = this.calculateGPA(); // Recalculate GPA
-  }
-
-  // Convert to database format (hides internal representation)
-  toDbObject() {
-    return {
-      id: this._id,
-      name: this._name,
-      status: this._status,
-      attendance_percentage: this._attendancePercentage,
-      assignment_score: this._assignmentScore,
-      grade_point_average: this._gpa,
-    };
-  }
-}
-
-module.exports = Student;
+// Auto-generated hooks from endpoint definitions:
+useGetNBAFixturesQuery({ date })          // fixtures list
+useGetPlayerPropsQuery({ fixtureId })     // props per fixture
+useGetNetworkInfluencersQuery()           // influencer rankings
+useSendOTPMutation()                      // OTP dispatch
+useVerifyOTPMutation()                    // OTP verification
 ```
 
-**Benefits:**
+Cache entries are keyed by serialised argument — `useGetNBAFixturesQuery({ date: "2026-03-18" })` and `useGetNBAFixturesQuery({ date: "2026-03-17" })` maintain independent cache entries, enabling instant back-navigation without refetching.
 
-- ✅ GPA calculation logic hidden from external code
-- ✅ Validation enforced in one place
-- ✅ Internal data format (camelCase) vs DB format (snake_case) abstracted
-- ✅ Changes to GPA formula only require updating one method
+### Routing
 
-#### Frontend Example: API Client
+**React Router v6** with `createBrowserRouter` + nested route definitions. Protected routes are wrapped in an `<AuthGuard>` component that reads `authSlice.sessionStatus` from the Redux store — unauthenticated users are redirected to `/auth/sign-in` with the intended destination preserved in `location.state` for post-login redirect.
+
+URL search params (`useSearchParams`) drive the fixture date — `?date=2026-03-18` — making every fixture view deep-linkable, shareable, and browser-history-navigable.
+
+### Charts & Visualisation
+
+**Recharts 2.x** — All four chart types in use:
+
+| Chart | Location | Data |
+|---|---|---|
+| `<BarChart>` | Influencers tab | Unique reach per influencer |
+| `<LineChart>` | Simulation tab | Projected daily user count |
+| `<BarChart>` | Optimisation tab | Bonus cost per scenario |
+| `<PieChart>` | Overview tab | Network composition breakdown |
+
+All charts are `<ResponsiveContainer width="100%" height={300}>` wrapped — automatically adapts to parent container width. Animated on mount via `isAnimationActive={true}` with `animationDuration={800}` and `animationEasing="ease-out"`.
+
+Custom `<Tooltip>` formatters apply locale-aware number formatting and percentage display. Custom `<Legend>` with icon and label styling matching the Tailwind design tokens.
+
+### Animation
+
+**Framer Motion** — Declarative animation library with a React-idiomatic API. Three animation patterns in use:
+
+**1. Mount/unmount transitions** via `AnimatePresence`:
+```jsx
+<AnimatePresence mode="wait">
+  <motion.div
+    key={activeTab}
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
+    exit={{ opacity: 0, x: -20 }}
+    transition={{ duration: 0.2, ease: "easeOut" }}
+  />
+</AnimatePresence>
+```
+
+**2. Staggered list reveals** via `variants` + `staggerChildren`:
+```jsx
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.08 } }
+};
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+};
+```
+
+**3. Spring-physics counter animations** via `useMotionValue` + `animate`:
+```jsx
+const count = useMotionValue(0);
+useEffect(() => {
+  animate(count, targetValue, {
+    duration: 1.2,
+    ease: "easeOut"
+  });
+}, [targetValue]);
+```
+
+**Skeleton loading screens** — `motion.div` elements with `animate={{ opacity: [0.5, 1, 0.5] }}` and `transition={{ repeat: Infinity, duration: 1.5 }}` create pulsing placeholder shimmer effects while RTK Query fetches resolve.
+
+### Icons
+
+**Lucide React (v0.383.0)** — Tree-shakeable SVG icon library. Only icons explicitly imported are included in the production bundle — zero unused icon weight. Used across navigation links, sport badges, action buttons, and status indicators.
+
+---
+
+## 📦 State Management Architecture
+
+### Redux Store Shape
 
 ```typescript
-// filepath: frontend/src/utils/api.ts
-class ApiClient {
-  private baseURL: string;
-  private axiosInstance: AxiosInstance;
+interface RootState {
+  auth: {
+    user: User | null;
+    sessionStatus: 'idle' | 'loading' | 'authenticated' | 'unauthenticated';
+    oauthProvider: 'google' | 'linkedin' | 'otp' | null;
+    error: string | null;
+  };
+  network: {
+    nodes: NetworkNode[];
+    edges: NetworkEdge[];
+    adjacencyList: Record<string, string[]>;
+    computedMetrics: {
+      influencers: RankedInfluencer[];
+      centralityScores: Record<string, number>;
+      totalReach: number;
+    } | null;
+    simConfig: SimulationConfig;
+    simResult: SimulationResult | null;
+  };
+  ui: {
+    selectedDate: string;       // ISO 8601 — "2026-03-18"
+    activeSport: Sport;
+    sidebarCollapsed: boolean;
+  };
+}
+```
 
-  constructor(baseURL: string) {
-    this.baseURL = baseURL;
-    this.axiosInstance = axios.create({ baseURL });
+### RTK Query API Definition
 
-    // Encapsulated: auto-attach token to requests
-    this.axiosInstance.interceptors.request.use((config) => {
-      const token = this.getToken();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+```javascript
+// src/store/api.js
+const statyxApi = createApi({
+  reducerPath: 'statyxApi',
+  baseQuery: fetchBaseQuery({
+    baseUrl: import.meta.env.VITE_API_URL,
+    credentials: 'include',       // sends session cookie with every request
+  }),
+  tagTypes: ['Fixtures', 'Props', 'Network', 'User'],
+  endpoints: (builder) => ({
+    getNBAFixtures: builder.query({
+      query: ({ date }) => `/api/nba/fixtures/?date=${date}`,
+      providesTags: ['Fixtures'],
+    }),
+    getPlayerProps: builder.query({
+      query: ({ fixtureId }) => `/api/nba/fixtures/${fixtureId}/props/`,
+      providesTags: (result, error, { fixtureId }) => [
+        { type: 'Props', id: fixtureId }
+      ],
+    }),
+    sendOTP: builder.mutation({
+      query: ({ phone }) => ({
+        url: '/api/auth/send-otp/',
+        method: 'POST',
+        body: { phone },
+      }),
+    }),
+    verifyOTP: builder.mutation({
+      query: ({ phone, code }) => ({
+        url: '/api/auth/verify-otp/',
+        method: 'POST',
+        body: { phone, code },
+      }),
+      invalidatesTags: ['User'],    // refetch user profile on login
+    }),
+  }),
+});
+```
+
+---
+
+## 🔢 Graph Algorithm Engine
+
+All graph algorithms live in `src/utils/graphAlgorithms.js` and execute synchronously in the browser's main thread. For networks up to ~1,000 users, all operations complete well within a single frame budget (16ms).
+
+### Adjacency List Representation
+
+The referral network is stored as an adjacency list — a JavaScript `Map<nodeId, nodeId[]>` — enabling O(1) neighbour lookup for BFS/DFS traversals. Built once on data load, updated incrementally on new edge insertion.
+
+### BFS — Network Reach (O(V + E))
+
+```javascript
+function getReachBFS(rootId, adjacencyList) {
+  const visited = new Set();
+  const queue = [rootId];
+  visited.add(rootId);
+  while (queue.length > 0) {
+    const node = queue.shift();
+    for (const neighbour of (adjacencyList.get(node) ?? [])) {
+      if (!visited.has(neighbour)) {
+        visited.add(neighbour);
+        queue.push(neighbour);
       }
-      return config;
-    });
+    }
   }
-
-  // Private helper (hidden from external code)
-  private getToken(): string | null {
-    return localStorage.getItem("auth_token");
-  }
-
-  // Public interface (abstracts HTTP details)
-  async getStudents(params?: StudentQueryParams): Promise<Student[]> {
-    const response = await this.axiosInstance.get("/students", { params });
-    return response.data.data;
-  }
-
-  async createStudent(data: CreateStudentDTO): Promise<Student> {
-    const response = await this.axiosInstance.post("/students", data);
-    return response.data.data;
-  }
+  return visited.size - 1;   // exclude root; count of indirect referrals
 }
-
-export const apiClient = new ApiClient(import.meta.env.VITE_API_BASE_URL);
 ```
 
-**Benefits:**
-
-- ✅ Token management hidden from components
-- ✅ HTTP implementation details abstracted
-- ✅ Easy to switch from axios to fetch without changing components
-
----
-
-### 2. Abstraction
-
-**Definition:** Hiding complex implementation details, exposing only essential features.
-
-#### Backend Example: Database Service
+### DFS — Cycle Detection (O(V))
 
 ```javascript
-// filepath: backend/src/services/StudentService.js
-class StudentService {
-  constructor(db) {
-    this.db = db; // Database abstraction
-  }
-
-  // Abstract interface: user doesn't know about SQL
-  async findAll(userId, filters = {}) {
-    // Complex SQL query abstracted away
-    const { status, page = 1, limit = 10, search } = filters;
-    let query = "SELECT * FROM students WHERE user_id = ?";
-    const params = [userId];
-
-    if (status) {
-      query += " AND status = ?";
-      params.push(status);
+function wouldCreateCycle(fromId, toId, adjacencyList) {
+  // DFS from toId — if we can reach fromId, adding this edge creates a cycle
+  const visited = new Set();
+  const stack = [toId];
+  while (stack.length > 0) {
+    const node = stack.pop();
+    if (node === fromId) return true;
+    if (!visited.has(node)) {
+      visited.add(node);
+      for (const n of (adjacencyList.get(node) ?? [])) stack.push(n);
     }
-
-    if (search) {
-      query += " AND (name LIKE ? OR email LIKE ?)";
-      params.push(`%${search}%`, `%${search}%`);
-    }
-
-    query += " LIMIT ? OFFSET ?";
-    params.push(limit, (page - 1) * limit);
-
-    return this.db.all(query, params);
   }
-
-  async create(studentData, userId) {
-    const student = new Student({ ...studentData, userId });
-
-    // Abstract: user doesn't know about GPA calculation
-    const dbData = student.toDbObject();
-
-    const result = await this.db.run(
-      `INSERT INTO students (...) VALUES (?, ?, ?, ...)`,
-      Object.values(dbData)
-    );
-
-    return { ...dbData, id: result.lastID };
-  }
-}
-
-module.exports = StudentService;
-```
-
-**Benefits:**
-
-- ✅ Controllers don't know about SQL syntax
-- ✅ Business logic separated from data access
-- ✅ Easy to swap SQLite for PostgreSQL later
-
-#### Frontend Example: Student Hook
-
-```typescript
-// filepath: frontend/src/hooks/useStudents.ts
-function useStudents() {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Abstract: component doesn't handle API calls
-  const fetchStudents = async (filters?: StudentFilters) => {
-    setLoading(true);
-    try {
-      const data = await apiClient.getStudents(filters);
-      setStudents(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const createStudent = async (data: CreateStudentDTO) => {
-    const newStudent = await apiClient.createStudent(data);
-    setStudents((prev) => [newStudent, ...prev]);
-  };
-
-  return { students, loading, error, fetchStudents, createStudent };
+  return false;
 }
 ```
 
-**Benefits:**
-
-- ✅ Components don't handle loading/error states
-- ✅ API call logic reusable across components
-- ✅ Easier to test (mock the hook)
-
----
-
-### 3. Inheritance
-
-**Definition:** Creating new classes from existing ones, inheriting properties and methods.
-
-#### Backend Example: Base Controller
+### Greedy Influencer Selection — Submodular Maximisation (O(k × V²))
 
 ```javascript
-// filepath: backend/src/controllers/BaseController.js
-class BaseController {
-  // Common error handling for all controllers
-  handleError(res, error, statusCode = 500) {
-    console.error(error);
-    return res.status(statusCode).json({
-      success: false,
-      error: error.message || "Internal server error",
-    });
-  }
-
-  // Common success response
-  sendSuccess(res, data, message = "Success", statusCode = 200) {
-    return res.status(statusCode).json({
-      success: true,
-      message,
-      data,
-    });
-  }
-
-  // Common validation
-  validateRequired(fields, body) {
-    const missing = fields.filter((field) => !body[field]);
-    if (missing.length > 0) {
-      throw new Error(`Missing required fields: ${missing.join(", ")}`);
+function greedyInfluencers(k, allNodes, adjacencyList) {
+  const selected = [];
+  const covered = new Set();
+  for (let i = 0; i < k; i++) {
+    let bestNode = null, bestGain = -1;
+    for (const node of allNodes) {
+      if (selected.includes(node)) continue;
+      const reach = getBFSSet(node, adjacencyList);
+      const marginalGain = [...reach].filter(n => !covered.has(n)).length;
+      if (marginalGain > bestGain) {
+        bestGain = marginalGain;
+        bestNode = node;
+      }
     }
+    if (!bestNode) break;
+    const bestReach = getBFSSet(bestNode, adjacencyList);
+    bestReach.forEach(n => covered.add(n));
+    selected.push(bestNode);
   }
+  return selected;
+  // Approximation: (1 - 1/e) ≈ 63% of optimal solution
 }
-
-// filepath: backend/src/controllers/StudentController.js
-class StudentController extends BaseController {
-  constructor(studentService) {
-    super(); // Call parent constructor
-    this.studentService = studentService;
-  }
-
-  async create(req, res) {
-    try {
-      // Use inherited validation method
-      this.validateRequired(
-        ["name", "status", "attendancePercentage"],
-        req.body
-      );
-
-      const student = await this.studentService.create(req.body, req.user.id);
-
-      // Use inherited success response
-      return this.sendSuccess(res, student, "Student created", 201);
-    } catch (error) {
-      // Use inherited error handling
-      return this.handleError(res, error, 400);
-    }
-  }
-}
-
-module.exports = StudentController;
 ```
 
-**Benefits:**
-
-- ✅ Eliminates duplicate error handling code
-- ✅ Consistent response format across all controllers
-- ✅ Easy to add common functionality (logging, metrics)
-
----
-
-### 4. Polymorphism
-
-**Definition:** Objects of different types can be accessed through the same interface.
-
-#### Backend Example: Service Interface
+### Floyd-Warshall — Flow Centrality (O(V³))
 
 ```javascript
-// filepath: backend/src/services/IService.js (interface pattern)
-class IService {
-  async findAll(userId, filters) {
-    throw new Error("Method not implemented");
-  }
-  async findById(id, userId) {
-    throw new Error("Method not implemented");
-  }
-  async create(data, userId) {
-    throw new Error("Method not implemented");
-  }
-  async update(id, data, userId) {
-    throw new Error("Method not implemented");
-  }
-  async delete(id, userId) {
-    throw new Error("Method not implemented");
-  }
-}
-
-// filepath: backend/src/services/StudentService.js
-class StudentService extends IService {
-  // Implement all methods...
-  async findAll(userId, filters) {
-    /* implementation */
-  }
-  // ...
-}
-
-// filepath: backend/src/services/TeacherService.js (hypothetical)
-class TeacherService extends IService {
-  // Different implementation, same interface
-  async findAll(userId, filters) {
-    /* different logic */
-  }
-  // ...
-}
-
-// filepath: backend/src/controllers/GenericController.js
-class GenericController {
-  constructor(service) {
-    this.service = service; // Can be StudentService or TeacherService
-  }
-
-  async getAll(req, res) {
-    // Same code works for both services (polymorphism)
-    const data = await this.service.findAll(req.user.id, req.query);
-    return res.json({ success: true, data });
-  }
-}
-```
-
-**Benefits:**
-
-- ✅ Add new entity types (Teacher, Course) without changing controller
-- ✅ Same CRUD logic for all entities
-- ✅ Easier to test (mock the service interface)
-
-#### Frontend Example: Form Components
-
-```typescript
-// Base form props interface
-interface BaseFormProps<T> {
-  onSubmit: (data: T) => Promise<void>;
-  onCancel: () => void;
-  initialData?: T;
-}
-
-// Student form
-function StudentForm({ onSubmit, onCancel, initialData }: BaseFormProps<StudentDTO>) {
-  // Implementation specific to students
-}
-
-// Teacher form (hypothetical)
-function TeacherForm({ onSubmit, onCancel, initialData }: BaseFormProps<TeacherDTO>) {
-  // Different implementation, same interface
-}
-
-// Modal wrapper (polymorphic usage)
-function FormModal<T>({ FormComponent, ...props }: { FormComponent: React.FC<BaseFormProps<T>> } & BaseFormProps<T>) {
-  return (
-    <Dialog>
-      <FormComponent {...props} />
-    </Dialog>
+function computeFlowCentrality(nodes, adjacencyList) {
+  const n = nodes.length;
+  const idx = Object.fromEntries(nodes.map((id, i) => [id, i]));
+  const dist = Array.from({ length: n }, (_, i) =>
+    Array.from({ length: n }, (_, j) => (i === j ? 0 : Infinity))
   );
-}
-
-// Usage:
-<FormModal FormComponent={StudentForm} onSubmit={handleSubmitStudent} />
-<FormModal FormComponent={TeacherForm} onSubmit={handleSubmitTeacher} />
-```
-
-**Benefits:**
-
-- ✅ Reusable modal logic
-- ✅ Type-safe forms
-- ✅ Easy to add new form types
-
----
-
-### 5. SOLID Principles
-
-#### S - Single Responsibility Principle
-
-**"A class should have one, and only one, reason to change."**
-
-**Example:**
-
-```javascript
-// ❌ BAD: StudentController does too much
-class StudentController {
-  async create(req, res) {
-    // Validation
-    if (!req.body.name) return res.status(400).json({ error: "Name required" });
-
-    // Business logic
-    const gpa = (req.body.attendance * 0.4 + req.body.assignment * 0.6) / 10;
-
-    // Database access
-    const result = db.run("INSERT INTO students...", [req.body.name, gpa]);
-
-    // Response formatting
-    return res.json({ success: true, data: { id: result.lastID } });
+  // Initialise edges
+  for (const [from, neighbours] of adjacencyList) {
+    for (const to of neighbours) dist[idx[from]][idx[to]] = 1;
   }
-}
-
-// ✅ GOOD: Separated responsibilities
-class StudentValidator {
-  validate(data) {
-    if (!data.name) throw new Error("Name required");
-    // ...
+  // Floyd-Warshall relaxation
+  for (let k = 0; k < n; k++)
+    for (let i = 0; i < n; i++)
+      for (let j = 0; j < n; j++)
+        if (dist[i][k] + dist[k][j] < dist[i][j])
+          dist[i][j] = dist[i][k] + dist[k][j];
+  // Centrality = fraction of shortest paths passing through each node
+  const centrality = {};
+  for (const node of nodes) {
+    let score = 0;
+    const k = idx[node];
+    for (let i = 0; i < n; i++)
+      for (let j = 0; j < n; j++)
+        if (i !== k && j !== k && dist[i][j] === dist[i][k] + dist[k][j])
+          score++;
+    centrality[node] = score;
   }
-}
-
-class StudentService {
-  create(data) {
-    const student = new Student(data); // Business logic (GPA calc)
-    return this.repository.save(student);
-  }
-}
-
-class StudentController {
-  async create(req, res) {
-    try {
-      this.validator.validate(req.body);
-      const student = await this.service.create(req.body);
-      return res.json({ success: true, data: student });
-    } catch (error) {
-      return res.status(400).json({ success: false, error: error.message });
-    }
-  }
+  return centrality;
 }
 ```
 
-#### O - Open/Closed Principle
-
-**"Software entities should be open for extension, but closed for modification."**
-
-**Example:**
+### Binary Search — Bonus Optimisation (O(log(range) × sim_cost))
 
 ```javascript
-// ✅ GOOD: Extend without modifying
-class BaseValidator {
-  validate(data) {
-    // Common validation
+function optimiseBonus(targetUsers, days, simulateFn) {
+  let lo = 0, hi = MAX_BONUS;
+  while (lo < hi) {
+    const mid = Math.floor((lo + hi) / 2);
+    const result = simulateFn({ bonus: mid, days });
+    if (result.totalUsers >= targetUsers) hi = mid;
+    else lo = mid + 1;
   }
+  return lo;   // minimum bonus achieving targetUsers in `days` days
 }
-
-class StudentValidator extends BaseValidator {
-  validate(data) {
-    super.validate(data); // Reuse base validation
-    // Add student-specific validation
-    if (data.attendancePercentage < 0 || data.attendancePercentage > 100) {
-      throw new Error("Invalid attendance percentage");
-    }
-  }
-}
-
-class TeacherValidator extends BaseValidator {
-  validate(data) {
-    super.validate(data);
-    // Add teacher-specific validation
-    if (!data.department) {
-      throw new Error("Department is required for teachers");
-    }
-  }
-}
-```
-
-#### L - Liskov Substitution Principle
-
-**"Objects should be replaceable with instances of their subtypes without altering correctness."**
-
-**Example:**
-
-```javascript
-// Base class contract
-class Repository {
-  async save(entity) {
-    // Must return the saved entity with an ID
-    throw new Error("Not implemented");
-  }
-}
-
-// Subclass respects contract
-class SQLiteRepository extends Repository {
-  async save(entity) {
-    const result = await this.db.run("INSERT...", entity.toDbObject());
-    return { ...entity, id: result.lastID }; // Returns entity with ID
-  }
-}
-
-class PostgreSQLRepository extends Repository {
-  async save(entity) {
-    const result = await this.pool.query(
-      "INSERT... RETURNING *",
-      entity.toDbObject()
-    );
-    return result.rows[0]; // Returns entity with ID
-  }
-}
-
-// Service works with any repository (Liskov substitution)
-class StudentService {
-  constructor(repository) {
-    this.repository = repository; // Can be SQLite or PostgreSQL
-  }
-
-  async create(data) {
-    const student = new Student(data);
-    return this.repository.save(student); // Works with both
-  }
-}
-```
-
-#### I - Interface Segregation Principle
-
-**"Clients should not be forced to depend on interfaces they don't use."**
-
-**Example:**
-
-```javascript
-// ❌ BAD: Fat interface
-interface IStudentService {
-  findAll(): Promise<Student[]>;
-  findById(id: number): Promise<Student>;
-  create(data: StudentDTO): Promise<Student>;
-  update(id: number, data: StudentDTO): Promise<Student>;
-  delete(id: number): Promise<void>;
-  exportToCSV(): Promise<string>;
-  sendEmailNotification(id: number): Promise<void>;
-  generateReport(): Promise<Buffer>;
-}
-
-// ✅ GOOD: Segregated interfaces
-interface IStudentReader {
-  findAll(): Promise<Student[]>;
-  findById(id: number): Promise<Student>;
-}
-
-interface IStudentWriter {
-  create(data: StudentDTO): Promise<Student>;
-  update(id: number, data: StudentDTO): Promise<Student>;
-  delete(id: number): Promise<void>;
-}
-
-interface IStudentExporter {
-  exportToCSV(): Promise<string>;
-}
-
-interface IStudentNotifier {
-  sendEmailNotification(id: number): Promise<void>;
-}
-
-// Implement only what you need
-class StudentService implements IStudentReader, IStudentWriter {
-  // Only implements CRUD methods
-}
-
-class StudentReportService implements IStudentExporter {
-  // Only implements export
-}
-```
-
-#### D - Dependency Inversion Principle
-
-**"Depend on abstractions, not concretions."**
-
-**Example:**
-
-```javascript
-// ❌ BAD: Direct dependency on SQLite
-class StudentService {
-  constructor() {
-    this.db = new SQLiteDatabase("data.sqlite"); // Tight coupling
-  }
-}
-
-// ✅ GOOD: Depend on abstraction
-interface IDatabase {
-  run(sql: string, params: any[]): Promise<{ lastID: number }>;
-  get(sql: string, params: any[]): Promise<any>;
-  all(sql: string, params: any[]): Promise<any[]>;
-}
-
-class SQLiteDatabase implements IDatabase {
-  run(sql, params) {
-    /* SQLite implementation */
-  }
-  get(sql, params) {
-    /* SQLite implementation */
-  }
-  all(sql, params) {
-    /* SQLite implementation */
-  }
-}
-
-class StudentService {
-  constructor(database: IDatabase) {
-    this.db = database; // Depends on interface, not implementation
-  }
-}
-
-// Can inject any database implementation
-const sqliteDb = new SQLiteDatabase("data.sqlite");
-const studentService = new StudentService(sqliteDb);
-
-// Easy to swap for PostgreSQL later
-const postgresDb = new PostgreSQLDatabase(connectionString);
-const studentService2 = new StudentService(postgresDb);
-
-// Easy to mock for testing
-const mockDb = new MockDatabase();
-const studentServiceForTesting = new StudentService(mockDb);
 ```
 
 ---
 
-## Design Patterns
+## 📊 Data Visualisation Layer
 
-### 1. Repository Pattern
+### Chart Architecture
 
-**Purpose:** Abstract data access logic, provide a collection-like interface.
+All charts use Recharts' **composable declarative API** — each visual is assembled from atomic primitives (`<XAxis>`, `<YAxis>`, `<Tooltip>`, `<Legend>`, `<Bar>`, `<Line>`, `<Cell>`) rather than a monolithic config object. This enables per-series conditional styling, custom tooltip content, and responsive container sizing.
 
-**Implementation:**
+### Custom Tooltip Pattern
 
-```javascript
-// filepath: backend/src/repositories/StudentRepository.js
-class StudentRepository {
-  constructor(db) {
-    this.db = db;
-  }
-
-  async findAll(filters = {}) {
-    const { userId, status, page = 1, limit = 10 } = filters;
-    let sql = "SELECT * FROM students WHERE user_id = ?";
-    const params = [userId];
-
-    if (status) {
-      sql += " AND status = ?";
-      params.push(status);
-    }
-
-    sql += " LIMIT ? OFFSET ?";
-    params.push(limit, (page - 1) * limit);
-
-    const rows = await this.db.all(sql, params);
-    return rows.map((row) => this.mapToEntity(row));
-  }
-
-  async findById(id, userId) {
-    const row = await this.db.get(
-      "SELECT * FROM students WHERE id = ? AND user_id = ?",
-      [id, userId]
-    );
-    return row ? this.mapToEntity(row) : null;
-  }
-
-  async save(student) {
-    if (student.id) {
-      return this.update(student);
-    } else {
-      return this.insert(student);
-    }
-  }
-
-  async insert(student) {
-    const data = student.toDbObject();
-    const result = await this.db.run(
-      `INSERT INTO students (user_id, name, status, ...) VALUES (?, ?, ?, ...)`,
-      Object.values(data)
-    );
-    return this.findById(result.lastID, student.userId);
-  }
-
-  async update(student) {
-    const data = student.toDbObject();
-    await this.db.run(
-      `UPDATE students SET name = ?, status = ?, ... WHERE id = ? AND user_id = ?`,
-      [...Object.values(data), student.id, student.userId]
-    );
-    return this.findById(student.id, student.userId);
-  }
-
-  async delete(id, userId) {
-    await this.db.run("DELETE FROM students WHERE id = ? AND user_id = ?", [
-      id,
-      userId,
-    ]);
-  }
-
-  // Map database row to domain entity
-  mapToEntity(row) {
-    return new Student({
-      id: row.id,
-      userId: row.user_id,
-      name: row.name,
-      status: row.status,
-      isScholarship: Boolean(row.is_scholarship),
-      attendancePercentage: row.attendance_percentage,
-      assignmentScore: row.assignment_score,
-      gradePointAverage: row.grade_point_average,
-      createdAt: new Date(row.created_at),
-      updatedAt: new Date(row.updated_at),
-    });
-  }
-}
-
-module.exports = StudentRepository;
+```jsx
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-gray-900 border border-gray-700 rounded-lg p-3 shadow-xl">
+      <p className="text-gray-400 text-xs mb-1">{label}</p>
+      {payload.map((entry) => (
+        <p key={entry.name} style={{ color: entry.color }} className="text-sm font-semibold">
+          {entry.name}: {entry.value.toLocaleString()}
+        </p>
+      ))}
+    </div>
+  );
+};
 ```
 
-**Benefits:**
+### Responsive Container Strategy
 
-- ✅ Service layer doesn't know about SQL
-- ✅ Easy to swap databases
-- ✅ Centralized mapping logic
-- ✅ Testable (mock repository)
+Every chart is wrapped in `<ResponsiveContainer width="100%" height={chartHeight}>` where `chartHeight` is derived from a `useWindowSize` hook — ensuring pixel-perfect rendering across breakpoints without fixed pixel heights that break on mobile viewports.
 
 ---
 
-### 2. Service Layer Pattern
+## 🔐 Authentication Flow (Frontend)
 
-**Purpose:** Encapsulate business logic, coordinate between repositories and controllers.
+### Session State Machine
 
-**Implementation:**
-
-```javascript
-// filepath: backend/src/services/StudentService.js
-class StudentService {
-  constructor(studentRepository, userRepository) {
-    this.studentRepository = studentRepository;
-    this.userRepository = userRepository;
-  }
-
-  async createStudent(data, userId) {
-    // Business rule: check user exists
-    const user = await this.userRepository.findById(userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    // Business rule: validate data
-    this.validateStudentData(data);
-
-    // Create domain entity (encapsulates GPA calculation)
-    const student = new Student({ ...data, userId });
-
-    // Save via repository
-    return this.studentRepository.save(student);
-  }
-
-  async updateStudent(id, data, userId) {
-    // Business rule: student must exist and belong to user
-    const existing = await this.studentRepository.findById(id, userId);
-    if (!existing) {
-      throw new Error("Student not found or access denied");
-    }
-
-    // Business rule: validate updates
-    this.validateStudentData(data, true);
-
-    // Update entity (GPA recalculated if scores changed)
-    existing.update(data);
-
-    return this.studentRepository.save(existing);
-  }
-
-  async getStatistics(userId) {
-    const students = await this.studentRepository.findAll({ userId });
-
-    // Business logic: calculate stats
-    return {
-      total: students.length,
-      active: students.filter((s) => s.status === "active").length,
-      withScholarship: students.filter((s) => s.isScholarship).length,
-      averageGPA:
-        students.reduce((sum, s) => sum + s.gpa, 0) / students.length || 0,
-    };
-  }
-
-  validateStudentData(data, isUpdate = false) {
-    // Business rules
-    if (!isUpdate && !data.name) {
-      throw new Error("Name is required");
-    }
-    if (data.attendancePercentage < 0 || data.attendancePercentage > 100) {
-      throw new Error("Attendance must be between 0 and 100");
-    }
-    // ...
-  }
-}
-
-module.exports = StudentService;
+```
+IDLE
+  │
+  ├── [user visits protected route] → check session cookie
+  │         │
+  │         ├── cookie valid   → AUTHENTICATED → render app
+  │         └── cookie absent  → UNAUTHENTICATED → redirect /auth/sign-in
+  │
+  ├── [user initiates OTP]     → LOADING
+  │         │
+  │         ├── OTP sent       → OTP_PENDING → render OTPVerify
+  │         │     │
+  │         │     ├── code correct → AUTHENTICATED
+  │         │     └── code wrong   → OTP_PENDING (error shown)
+  │         └── send failed    → UNAUTHENTICATED (error shown)
+  │
+  ├── [user clicks Google]     → OAUTH_REDIRECTING → popup opens
+  │         │
+  │         └── token returned → POST /api/auth/google/ → AUTHENTICATED
+  │
+  └── [user clicks LinkedIn]   → OAUTH_REDIRECTING → redirect
+            │
+            └── callback page  → POST /api/auth/linkedin/ → AUTHENTICATED
 ```
 
-**Benefits:**
+### OAuth Callback Handler
 
-- ✅ Business logic separated from data access
-- ✅ Reusable across controllers (REST API, GraphQL, CLI)
-- ✅ Easy to test (mock repositories)
-- ✅ Single place for business rules
+```jsx
+// src/components/auth/OAuthCallback.jsx
+export function OAuthCallback() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const code = searchParams.get('code');
+    const provider = detectProvider();   // linkedin | google from URL pattern
+
+    if (!code) {
+      dispatch(authSlice.actions.setError('OAuth callback missing code'));
+      navigate('/auth/sign-in');
+      return;
+    }
+
+    dispatch(exchangeOAuthCode({ provider, code }))
+      .unwrap()
+      .then(() => navigate('/app/overview'))
+      .catch(() => navigate('/auth/sign-in'));
+  }, []);
+
+  return <LoadingSpinner label="Completing sign-in..." />;
+}
+```
 
 ---
 
-### 3. Middleware Pattern
+## 🌐 Backend Integration
 
-**Purpose:** Process requests in a pipeline before reaching controllers.
+The frontend communicates exclusively with the [statyx-Backend](https://github.com/vk93102/statyx-Backend) Django REST API. All requests include `credentials: 'include'` to send the session cookie cross-origin — enabled by `django-cors-headers` on the backend with `CORS_ALLOW_CREDENTIALS=True` and `CORS_ALLOWED_ORIGINS` explicitly listing the frontend origin.
 
-**Implementation:**
+### API Base URL Configuration
 
 ```javascript
-// filepath: backend/src/middleware/auth.js
-function authenticate(req, res, next) {
-  try {
-    const token = req.headers.authorization?.replace("Bearer ", "");
-    if (!token) {
-      return res.status(401).json({ error: "Token required" });
+// vite.config.js — development proxy (avoids CORS preflight in dev)
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      }
     }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Attach user to request
-    next(); // Continue to next middleware/controller
-  } catch (error) {
-    return res.status(403).json({ error: "Invalid token" });
   }
-}
+});
+```
 
-// filepath: backend/src/middleware/validate.js
-function validateStudent(req, res, next) {
-  const { name, status, attendancePercentage, assignmentScore } = req.body;
+In production, `VITE_API_URL` is set to the Render.com backend URL — `https://statyx-backend.onrender.com` — and RTK Query's `fetchBaseQuery.baseUrl` points there directly, with CORS handled by the backend's `django-cors-headers` middleware.
 
-  if (!name || name.trim() === "") {
-    return res.status(400).json({ error: "Name is required" });
+### Request Lifecycle (RTK Query)
+
+```
+Component mounts
+      │
+      ▼
+useGetNBAFixturesQuery({ date }) called
+      │
+      ├── Cache entry exists + fresh?
+      │         └── YES → return cached data immediately, no network request
+      │
+      └── Cache miss or stale?
+                └── Dispatch internal fetch action
+                          │
+                          ▼
+                    fetchBaseQuery
+                          │
+                          ├── Build URL: VITE_API_URL + /api/nba/fixtures/?date=2026-03-18
+                          ├── Attach session cookie (credentials: 'include')
+                          ├── Set Content-Type: application/json
+                          │
+                          ▼
+                    Django backend (Render.com)
+                    ├── django-cors-headers validates origin
+                    ├── Session middleware authenticates request
+                    ├── NBAFixtureViewSet.list() queries PostgreSQL
+                    └── DRF serializer returns JSON
+                          │
+                          ▼
+                    RTK Query normalises response
+                    ├── Stores in Redux cache keyed by { date }
+                    ├── Sets TTL (5 min default)
+                    └── Re-renders subscribed components
+```
+
+### Backend Endpoint Map (consumed by frontend)
+
+```
+Auth
+  POST  /api/auth/send-otp/           Twilio OTP dispatch
+  POST  /api/auth/verify-otp/         OTP verification → session
+  POST  /api/auth/google/             Google ID token → session
+  POST  /api/auth/linkedin/           LinkedIn code → session
+  POST  /api/auth/logout/             Session teardown
+  GET   /api/auth/me/                 Current user profile
+  POST  /api/auth/avatar/             Avatar upload (Pillow)
+
+NBA
+  GET   /api/nba/fixtures/?date=      Fixture list
+  GET   /api/nba/fixtures/{id}/props/ Props per fixture (EV, hit rates, odds)
+  GET   /api/nba/players/{id}/splits/ Historical splits
+
+NFL / Football (BETA)
+  GET   /api/football/fixtures/?date=
+  GET   /api/football/fixtures/{id}/props/
+
+Network Graph
+  POST  /api/network/add-referral/    Add edge (cycle-safe)
+  GET   /api/network/reach/{id}/      BFS reach count
+  GET   /api/network/influencers/     Greedy top-k
+  POST  /api/network/simulate/        Growth simulation
+  POST  /api/network/optimise-bonus/  Min viable bonus
+  GET   /api/network/centrality/      Flow centrality scores
+```
+
+---
+
+## ⚡ Performance Architecture
+
+### Code Splitting Strategy
+
+Vite automatically splits the bundle at dynamic `import()` boundaries. Each major route is a separate chunk:
+
+```javascript
+// React Router route definitions use lazy loading
+const Overview     = lazy(() => import('./components/dashboard/Overview'));
+const Influencers  = lazy(() => import('./components/dashboard/Influencers'));
+const Simulation   = lazy(() => import('./components/dashboard/Simulation'));
+const NBAProps     = lazy(() => import('./components/sports/NBAProps'));
+```
+
+This ensures the initial page load only ships the authentication shell. Dashboard chunks download in the background after sign-in.
+
+### Memoisation Strategy
+
+| Hook | Applied Where | Reason |
+|---|---|---|
+| `React.memo` | `PropCard`, `InfluencerRow`, `OddsTable` | Prevents re-render when parent re-renders but props unchanged |
+| `useMemo` | Graph computation results | Floyd-Warshall O(V³) is expensive — recompute only when adjacency list changes |
+| `useCallback` | Simulation re-run handler | Stable reference prevents child re-renders on every slider move |
+| `useMemo` | Chart data transformation | Recharts data arrays recreated only when raw data changes |
+
+### RTK Query Cache Optimisation
+
+```javascript
+// Polling for live game data during active game windows
+useGetNBAFixturesQuery(
+  { date: selectedDate },
+  {
+    pollingInterval: isGameDay ? 30_000 : 0,   // 30s polling on game days only
+    refetchOnFocus: true,                       // refetch when tab regains focus
+    refetchOnMountOrArgChange: 300,             // refetch if >5 min old
   }
-
-  if (!["active", "inactive", "graduated"].includes(status)) {
-    return res.status(400).json({ error: "Invalid status" });
-  }
-
-  if (attendancePercentage < 0 || attendancePercentage > 100) {
-    return res.status(400).json({ error: "Attendance must be 0-100" });
-  }
-
-  if (assignmentScore < 0 || assignmentScore > 100) {
-    return res.status(400).json({ error: "Assignment score must be 0-100" });
-  }
-
-  next(); // Validation passed
-}
-
-// filepath: backend/src/routes/students.js
-router.post(
-  "/students",
-  authenticate,
-  validateStudent,
-  studentController.create
 );
-//                        ^^^^^^^^^^^  ^^^^^^^^^^^^^^  Request flows through middlewares
 ```
 
-**Benefits:**
+### Performance Targets
 
-- ✅ Reusable validation logic
-- ✅ Separation of concerns (auth, validation, logging)
-- ✅ Easy to add/remove middleware
-- ✅ Clean controller code
+| Metric | Target | Implementation |
+|---|---|---|
+| Initial bundle size | < 200KB gzip | Route-level code splitting + tree-shaking |
+| First Contentful Paint | < 1.5s | Vite static SPA — no SSR hydration overhead |
+| Time to Interactive | < 2s | Auth shell loads immediately; dashboard lazy-loads |
+| Animation frame rate | 60 FPS | Framer Motion GPU-composited transforms only |
+| RTK Query cache hit | > 80% same-session | 5-min TTL + arg-keyed cache entries |
 
 ---
 
-### 4. Factory Pattern
-
-**Purpose:** Create objects without specifying exact class.
-
-**Implementation:**
-
-```javascript
-// filepath: backend/src/factories/ResponseFactory.js
-class ResponseFactory {
-  static success(data, message = "Success", statusCode = 200) {
-    return {
-      success: true,
-      message,
-      data,
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  static error(error, statusCode = 500) {
-    return {
-      success: false,
-      error: error.message || "Internal server error",
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  static validationError(errors) {
-    return {
-      success: false,
-      error: "Validation failed",
-      errors,
-      timestamp: new Date().toISOString(),
-    };
-  }
-
-  static paginatedResponse(data, page, limit, total) {
-    return {
-      success: true,
-      data,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
-      timestamp: new Date().toISOString(),
-    };
-  }
-}
-
-// Usage in controller
-class StudentController {
-  async getAll(req, res) {
-    const { page = 1, limit = 10 } = req.query;
-    const students = await this.service.findAll(req.user.id, req.query);
-    const total = await this.service.count(req.user.id);
-
-    return res.json(
-      ResponseFactory.paginatedResponse(students, page, limit, total)
-    );
-  }
-
-  async create(req, res) {
-    try {
-      const student = await this.service.create(req.body, req.user.id);
-      return res
-        .status(201)
-        .json(ResponseFactory.success(student, "Student created", 201));
-    } catch (error) {
-      return res.status(400).json(ResponseFactory.error(error, 400));
-    }
-  }
-}
-```
-
-**Benefits:**
-
-- ✅ Consistent response format
-- ✅ Easy to change response structure globally
-- ✅ Self-documenting (clear intent)
-
----
-
-### 5. Singleton Pattern
-
-**Purpose:** Ensure only one instance of a class exists.
-
-**Implementation:**
-
-```javascript
-// filepath: backend/db.js
-const Database = require("better-sqlite3");
-
-class DatabaseConnection {
-  constructor() {
-    if (DatabaseConnection.instance) {
-      return DatabaseConnection.instance; // Return existing instance
-    }
-
-    this.db = new Database("data.sqlite");
-    this.db.pragma("journal_mode = WAL"); // Performance optimization
-
-    DatabaseConnection.instance = this;
-  }
-
-  run(sql, params = []) {
-    return this.db.prepare(sql).run(params);
-  }
-
-  get(sql, params = []) {
-    return this.db.prepare(sql).get(params);
-  }
-
-  all(sql, params = []) {
-    return this.db.prepare(sql).all(params);
-  }
-
-  close() {
-    this.db.close();
-    DatabaseConnection.instance = null;
-  }
-}
-
-// Export single instance
-module.exports = new DatabaseConnection();
-```
-
-**Benefits:**
-
-- ✅ Only one database connection
-- ✅ Connection reused across entire app
-- ✅ Prevents connection leaks
-
----
-
-## Backend Architecture
-
-### Directory Structure
+## 📁 Directory Structure
 
 ```
-backend/
+statyx-frontend/
+│
+├── public/
+│   ├── favicon.svg
+│   └── og-image.png
+│
 ├── src/
-│   ├── controllers/           # HTTP request handlers
-│   │   ├── BaseController.js  # Abstract base class
-│   │   ├── AuthController.js  # Signup, login
-│   │   └── StudentController.js  # Student CRUD
 │   │
-│   ├── services/              # Business logic
-│   │   ├── AuthService.js     # JWT generation, password hashing
-│   │   └── StudentService.js  # Student business rules
+│   ├── main.jsx                      Vite entry — ReactDOM.createRoot + Redux Provider
+│   ├── App.jsx                       BrowserRouter + route tree + AuthGuard
 │   │
-│   ├── repositories/          # Data access
-│   │   ├── UserRepository.js
-│   │   └── StudentRepository.js
+│   ├── store/
+│   │   ├── index.js                  configureStore — combines all slices + RTK Query
+│   │   ├── authSlice.js              User identity, session status, OAuth state
+│   │   ├── networkSlice.js           Graph data, computed metrics, sim config
+│   │   ├── uiSlice.js                Date selection, active sport, UI prefs
+│   │   └── api.js                    RTK Query createApi — all endpoint definitions
 │   │
-│   ├── models/                # Domain entities
-│   │   ├── User.js
-│   │   └── Student.js
+│   ├── components/
+│   │   │
+│   │   ├── auth/
+│   │   │   ├── SignIn.jsx             Email/password + OAuth provider buttons
+│   │   │   ├── SignUp.jsx             Registration form + phone input + OTP trigger
+│   │   │   ├── OTPVerify.jsx          6-digit code input with countdown timer
+│   │   │   └── OAuthCallback.jsx      LinkedIn + Google redirect code exchange
+│   │   │
+│   │   ├── dashboard/
+│   │   │   ├── Overview.jsx           KPI grid + reach chart + growth trend
+│   │   │   ├── Influencers.jsx        Ranked table + flow centrality + bar chart
+│   │   │   ├── Simulation.jsx         Sim controls + line chart + target marker
+│   │   │   └── Optimization.jsx       Bonus scenarios + bar chart + ROI metric
+│   │   │
+│   │   ├── sports/
+│   │   │   ├── NBAProps.jsx           Date nav + fixture list + prop cards
+│   │   │   ├── NFLProps.jsx           NFL fixture list (BETA badge)
+│   │   │   └── SoccerProps.jsx        Soccer fixture list (BETA badge)
+│   │   │
+│   │   └── shared/
+│   │       ├── PropCard.jsx           Player prop card — hit rates + EV + matchup
+│   │       ├── OddsTable.jsx          Multi-book over/under comparison + vig calc
+│   │       ├── EVBadge.jsx            EV% tier classification badge
+│   │       ├── MatchupGradeBadge.jsx  A+→F grade badge with colour scale
+│   │       ├── HitRateBar.jsx         Visual hit-rate progress bar (L5/L10/season)
+│   │       ├── LoadingSkeletons.jsx   Framer Motion shimmer placeholders
+│   │       └── Sidebar.jsx            Navigation panel + floating dock
 │   │
-│   ├── middleware/            # Request processing pipeline
-│   │   ├── auth.js            # JWT verification
-│   │   ├── validate.js        # Input validation
-│   │   ├── errorHandler.js    # Global error handling
-│   │   └── cors.js            # CORS configuration
+│   ├── utils/
+│   │   ├── graphAlgorithms.js         BFS, DFS, greedy, Floyd-Warshall, binary search
+│   │   ├── evCalculator.js            EV% formula, implied probability, vig
+│   │   ├── simulationEngine.js        Discrete-time growth model, S-curve adoption
+│   │   └── formatters.js              Date (date-fns), odds, percentages, currency
 │   │
-│   ├── routes/                # API route definitions
-│   │   ├── auth.js            # /auth/signup, /auth/login
-│   │   └── students.js        # /api/students/*
-│   │
-│   ├── utils/                 # Helper functions
-│   │   ├── ResponseFactory.js
-│   │   └── logger.js
-│   │
-│   └── config/                # Configuration
-│       └── database.js
+│   └── assets/
+│       ├── fonts/
+│       └── images/
 │
-├── tests/                     # Test suite
-│   ├── testing.sh             # Bash test runner
-│   └── README.md
-│
-├── db.js                      # Database singleton
-├── init-db.js                 # Database initialization script
-├── server.js                  # Express app entry point
-├── package.json
-└── .env                       # Environment variables
-```
-
-### Request Flow
-
-```
-HTTP Request
-    │
-    ▼
-┌────────────────────────┐
-│  Express Middleware    │
-│  - CORS                │
-│  - Body Parser         │
-│  - Logging             │
-└────────┬───────────────┘
-         │
-         ▼
-┌────────────────────────┐
-│  Authentication        │
-│  - JWT verification    │
-│  - req.user populated  │
-└────────┬───────────────┘
-         │
-         ▼
-┌────────────────────────┐
-│  Validation            │
-│  - Check required      │
-│  - Type checking       │
-│  - Range validation    │
-└────────┬───────────────┘
-         │
-         ▼
-┌────────────────────────┐
-│  Controller            │
-│  - Parse request       │
-│  - Call service        │
-│  - Format response     │
-└────────┬───────────────┘
-         │
-         ▼
-┌────────────────────────┐
-│  Service               │
-│  - Business logic      │
-│  - Call repository     │
-│  - Return data         │
-└────────┬───────────────┘
-         │
-         ▼
-┌────────────────────────┐
-│  Repository            │
-│  - Build SQL query     │
-│  - Execute query       │
-│  - Map to entity       │
-└────────┬───────────────┘
-         │
-         ▼
-┌────────────────────────┐
-│  Database              │
-│  - Execute query       │
-│  - Return rows         │
-└────────┬───────────────┘
-         │
-         ▼
-    JSON Response
+├── index.html                        Single HTML shell — Vite entry point
+├── vite.config.js                    Vite + SWC plugin + dev proxy config
+├── tsconfig.json                     TypeScript strict mode config
+├── eslint.config.js                  ESLint flat config — React + TS rules
+├── package.json                      Dependencies + scripts
+└── package-lock.json                 Lockfile — deterministic installs
 ```
 
 ---
 
-## Frontend Architecture
+## 🎨 Design System
 
-### Component Hierarchy
+### Visual Language
 
-```
-App
- │
- ├── AuthProvider (Context)
- │    │
- │    ├── Login Page
- │    │    └── Auth Component
- │    │
- │    └── Dashboard Page
- │         ├── Header
- │         │    ├── Logo
- │         │    ├── SearchBar
- │         │    └── UserMenu
- │         │
- │         ├── StatsCards (4 cards)
- │         │    ├── TotalStudents
- │         │    ├── ActiveStudents
- │         │    ├── Scholarships
- │         │    └── AverageGPA
- │         │
- │         ├── Filters
- │         │    ├── StatusFilter
- │         │    ├── ScholarshipFilter
- │         │    └── SortDropdown
- │         │
- │         ├── StudentsTable
- │         │    ├── TableHeader
- │         │    │    ├── SortableColumn (Name)
- │         │    │    ├── SortableColumn (Email)
- │         │    │    └── ...
- │         │    │
- │         │    └── StudentRow (repeated)
- │         │         ├── NameCell
- │         │         ├── StatusBadge
- │         │         ├── GPAProgress
- │         │         └── ActionButtons
- │         │              ├── EditButton
- │         │              └── DeleteButton
- │         │
- │         ├── Pagination
- │         │    ├── PrevButton
- │         │    ├── PageNumbers
- │         │    └── NextButton
- │         │
- │         └── StudentModal
- │              ├── Form
- │              │    ├── NameInput
- │              │    ├── EmailInput
- │              │    ├── StatusSelect
- │              │    ├── ScholarshipCheckbox
- │              │    ├── AttendanceInput
- │              │    └── AssignmentInput
- │              │
- │              └── FormActions
- │                   ├── SubmitButton
- │                   └── CancelButton
-```
+- **Dark-first palette** — `bg-gray-950` base, `bg-gray-900` surface, `bg-gray-800` elevated surface
+- **Accent colour** — Cyan (`#00d4ff`) for primary actions, active states, and positive EV indicators
+- **Typography scale** — Display headings use `font-bold` at `text-2xl`+; body copy at `text-sm` with `text-gray-400` secondary
+- **Glassmorphism cards** — `bg-white/5 backdrop-blur-sm border border-white/10` for elevated content surfaces
+- **Spacing system** — Tailwind's 4px base unit, consistent `gap-4`, `p-6`, `rounded-xl` throughout
 
-### State Management
+### Responsive Breakpoints (Tailwind)
 
-```typescript
-// Global State (Context API)
-interface AuthContext {
-  user: User | null;
-  token: string | null;
-  login: (username: string, password: string) => Promise<void>;
-  logout: () => void;
-  isAuthenticated: boolean;
-}
+| Breakpoint | Width | Layout Change |
+|---|---|---|
+| `sm` | 640px | Single-column stack |
+| `md` | 768px | 2-column grid |
+| `lg` | 1024px | Sidebar visible, 3-column |
+| `xl` | 1280px | Full 4-column KPI grid |
 
-// Local State (useState in Dashboard)
-interface DashboardState {
-  students: Student[];
-  filteredStudents: Student[];
-  currentPage: number;
-  filters: {
-    status: string;
-    scholarship: boolean | null;
-    search: string;
-  };
-  sortBy: string;
-  sortOrder: "asc" | "desc";
-  isModalOpen: boolean;
-  editingStudent: Student | null;
-  stats: Statistics;
-  loading: boolean;
-  error: string | null;
-}
+### Animation Token Consistency
 
-// Derived State (useMemo)
-const paginatedStudents = useMemo(() => {
-  const start = (currentPage - 1) * ITEMS_PER_PAGE;
-  return filteredStudents.slice(start, start + ITEMS_PER_PAGE);
-}, [filteredStudents, currentPage]);
+All Framer Motion transitions use a shared duration/easing token:
 
-const totalPages = useMemo(() => {
-  return Math.ceil(filteredStudents.length / ITEMS_PER_PAGE);
-}, [filteredStudents.length]);
-```
+```javascript
+export const TRANSITION_FAST = { duration: 0.15, ease: 'easeOut' };
+export const TRANSITION_MED  = { duration: 0.25, ease: 'easeOut' };
+export const TRANSITION_SLOW = { duration: 0.4,  ease: [0.4, 0, 0.2, 1] };
 
-### Data Flow
-
-```
-User Action (e.g., Create Student)
-    │
-    ▼
-Event Handler in Component
-    │
-    ▼
-Validation (client-side)
-    │
-    ▼
-API Call (axios)
-    │
-    ▼
-Backend Processing
-    │
-    ▼
-Response Received
-    │
-    ▼
-Update Local State (setStudents)
-    │
-    ▼
-Re-render Component
-    │
-    ▼
-Show Success Toast
+export const SPRING_BOUNCY  = { type: 'spring', stiffness: 400, damping: 25 };
+export const SPRING_SMOOTH  = { type: 'spring', stiffness: 100, damping: 30 };
 ```
 
 ---
 
-## Security Architecture
+## 🏗️ Build Pipeline
 
-### Authentication Flow
+### Development
 
-```
-┌──────────┐                  ┌──────────┐                  ┌──────────┐
-│ Frontend │                  │ Backend  │                  │ Database │
-└────┬─────┘                  └────┬─────┘                  └────┬─────┘
-     │                             │                             │
-     │ POST /auth/signup           │                             │
-     ├────────────────────────────>│                             │
-     │ {username, password}        │                             │
-     │                             │ hash password (bcrypt)      │
-     │                             │────────┐                    │
-     │                             │        │                    │
-     │                             │<───────┘                    │
-     │                             │                             │
-     │                             │ INSERT user                 │
-     │                             ├────────────────────────────>│
-     │                             │                             │
-     │                             │<────────────────────────────┤
-     │                             │ user created                │
-     │<────────────────────────────┤                             │
-     │ 201 Created                 │                             │
-     │                             │                             │
-     │ POST /auth/login            │                             │
-     ├────────────────────────────>│                             │
-     │ {username, password}        │                             │
-     │                             │ SELECT user                 │
-     │                             ├────────────────────────────>│
-     │                             │                             │
-     │                             │<────────────────────────────┤
-     │                             │ user record                 │
-     │                             │                             │
-     │                             │ verify password (bcrypt)    │
-     │                             │────────┐                    │
-     │                             │        │                    │
-     │                             │<───────┘                    │
-     │                             │                             │
-     │                             │ generate JWT                │
-     │                             │────────┐                    │
-     │                             │        │                    │
-     │                             │<───────┘                    │
-     │<────────────────────────────┤                             │
-     │ { token: "eyJ..." }         │                             │
-     │                             │                             │
-     │ save token to localStorage  │                             │
-     │────────┐                    │                             │
-     │        │                    │                             │
-     │<───────┘                    │                             │
-     │                             │                             │
-     │ GET /api/students           │                             │
-     │ Authorization: Bearer token │                             │
-     ├────────────────────────────>│                             │
-     │                             │ verify JWT                  │
-     │                             │────────┐                    │
-     │                             │        │                    │
-     │                             │<───────┘                    │
-     │                             │                             │
-     │                             │ extract userId from token   │
-     │                             │────────┐                    │
-     │                             │        │                    │
-     │                             │<───────┘                    │
-     │                             │                             │
-     │                             │ SELECT students WHERE       │
-     │                             │ user_id = ?                 │
-     │                             ├────────────────────────────>│
-     │                             │                             │
-     │                             │<────────────────────────────┤
-     │<────────────────────────────┤ students                    │
-     │ { data: [...] }             │                             │
-     │                             │                             │
+```bash
+npm run dev
+# → Vite ESM dev server on http://localhost:5173
+# → SWC transpilation (no Babel)
+# → Hot Module Replacement: component edits reflect < 50ms
+# → Django API proxied via vite.config.js server.proxy
 ```
 
-### Security Measures
+### Production Build
 
-| Layer                | Measure             | Implementation                           |
-| -------------------- | ------------------- | ---------------------------------------- |
-| **Transport**        | HTTPS               | SSL/TLS certificate on Render/Vercel     |
-| **Authentication**   | JWT                 | jsonwebtoken library, 8-hour expiration  |
-| **Password Storage** | Hashing             | bcrypt with salt rounds = 10             |
-| **Authorization**    | User-scoped queries | `WHERE user_id = ?` in all queries       |
-| **Input Validation** | Middleware          | Validate types, ranges, required fields  |
-| **SQL Injection**    | Prepared statements | Parameterized queries (`?` placeholders) |
-| **XSS**              | React escaping      | React auto-escapes JSX                   |
-| **CORS**             | Whitelist           | Only allow frontend origin               |
-| **Rate Limiting**    | (TODO)              | Recommend express-rate-limit             |
+```bash
+npm run build
+# → TypeScript compilation (tsc --noEmit — type check only)
+# → Vite + Rollup bundle:
+#     dist/index.html              ← Shell
+#     dist/assets/index-[hash].js  ← Auth shell chunk
+#     dist/assets/Overview-[hash].js   ← Route chunk (lazy)
+#     dist/assets/NBAProps-[hash].js   ← Route chunk (lazy)
+#     ... one chunk per lazily-imported route
+# → Brotli + GZip compression of all JS/CSS assets
+# → Asset fingerprinting (content hash in filename) for immutable CDN caching
+```
+
+### Type Checking
+
+```bash
+npm run typecheck
+# → tsc --noEmit --strict
+# → Validates all TypeScript across the codebase
+# → Must pass with zero errors before any PR merge
+```
+
+---
+
+## 💻 Local Setup
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/vk93102/statyx-frontend.git
+cd statyx-frontend
+
+# 2. Install dependencies (deterministic via lockfile)
+npm install
+
+# 3. Configure environment
+cp .env.example .env.local
+# Set VITE_API_URL to your local Django backend:
+# VITE_API_URL=http://localhost:8000
+# (or leave blank to use the vite.config.js proxy)
+
+# 4. Start development server
+npm run dev
+# → http://localhost:5173
+
+# 5. Run type check
+npm run typecheck
+
+# 6. Run linter
+npx eslint src/
+
+# 7. Production build (output to dist/)
+npm run build
+
+# 8. Preview production build locally
+npm run preview
+# → http://localhost:4173
+```
+
+> ⚠️ The frontend requires the [statyx-Backend](https://github.com/vk93102/statyx-Backend) Django server running on `http://localhost:8000` for all API calls to resolve. Follow the backend setup instructions in that repo first.
+
+---
+
+## 🔐 Environment Variables
+
+```env
+# Required — Django backend URL
+VITE_API_URL=http://localhost:8000
+
+# Optional — override in production deployment
+# VITE_API_URL=https://statyx-backend.onrender.com
+```
+
+The `VITE_` prefix is required by Vite — only variables prefixed `VITE_` are exposed to client-side code via `import.meta.env.VITE_*`. Unprefixed variables remain server-only and are never bundled into the browser payload.
+
+---
+
+## 🤝 Contributing
+
+1. Fork [github.com/vk93102/statyx-frontend](https://github.com/vk93102/statyx-frontend)
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Ensure `npm run typecheck` passes with **zero TypeScript errors**
+4. Ensure `npx eslint src/` passes with **zero ESLint errors**
+5. Follow Conventional Commits: `feat:`, `fix:`, `perf:`, `refactor:`, `chore:`
+6. Open a Pull Request — describe what the change does and why
+
+### Code Standards
+
+- No `any` type — all values must be explicitly typed
+- All `useEffect` dependency arrays must be exhaustive (enforced by ESLint)
+- All new components must be wrapped in `React.memo` if they receive stable props
+- Chart components must use `<ResponsiveContainer>` — no fixed pixel widths
+- All Framer Motion animations must use shared transition tokens from `utils/tokens.js`
+
+---
+
+## 📜 License
+
+© Statyx. All rights reserved.
+
+---
+
+<p align="center">
+  <strong>Statyx Frontend</strong><br/>
+  React 18 · TypeScript 5 · Vite 5 + SWC · Redux Toolkit · RTK Query<br/>
+  Recharts · Framer Motion · Tailwind CSS · Lucide React<br/><br/>
+  <a href="https://statyx.io">Live Platform</a> ·
+  <a href="https://github.com/vk93102/statyx-frontend">Frontend Repo</a> ·
+  <a href="https://github.com/vk93102/statyx-Backend">Backend Repo</a> ·
+  <a href="https://drive.google.com/file/d/1MM9s7fH6XkBgMpIbQMhxkwRXxrmdAb6m/view?usp=sharing">Demo Video</a>
+</p>
